@@ -1,0 +1,26 @@
+<!doctype html>
+<title>TC</title>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<div class=page>
+    <h1>Welcome to TC</h1>
+    <div class=metanav>
+    {% if not session.logged_in %}
+    <form action="{{ url_for('login') }}" method=post>
+        Username:
+        <input type=text name=username>
+        Password:
+        <input type=password name=password>
+        <input type=submit value=Login>
+    </form>
+    {% else %}
+        <a href="{{ url_for('logout') }}">log out</a>
+    {% endif %}
+    </div>
+    {% for message in get_flashed_messages() %}
+        <div class=flash>{{ message }}</div>
+    {% endfor %}
+    {% block body %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    {% endblock %}
+</div>
