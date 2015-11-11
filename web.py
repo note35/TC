@@ -13,11 +13,7 @@ redis = FlaskRedis(application)
 
 @application.route("/")
 def index():
-    form = LoginForm()
-    if not session.get('logged_in'):
-        return render_template('index.html')
-    else:
-        return redirect(url_for('home'))
+    return render_template('index.html')
 
 @application.route("/login")
 def login():
@@ -36,12 +32,12 @@ def verify_login():
             login_user = ast.literal_eval(redis.hget('user', form.username.data)) 
             if login_user['password'] == hashlib.sha224(form.password.data).hexdigest():
                 flash('login successfully!')
-                session['logged_in'] = True
+                session['logged_in'] = form.username.data
                 return redirect(url_for('home'))
             #debug backdoor
             elif form.username.data == 'admin' and form.password.data == '12345':
                 flash('login successfully!')
-                session['logged_in'] = True
+                session['logged_in'] = form.username.data
                 return redirect(url_for('home'))
             else:
                 flash('wrong password!')                 
@@ -79,7 +75,7 @@ def verify_register():
                         'password':hashlib.sha224(form.password.data).hexdigest(),
                         'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) })
                 flash('register successfully!')
-                session['logged_in'] = True
+                session['logged_in'] = form.username.data
                 return redirect(url_for('home'))
             else:
                 flash('password is not equal to confirm password, try again!')
@@ -96,17 +92,22 @@ def verify_register():
 def home():
     return render_template('home.html')
 
-@application.route("/pomsg")
+@application.route("/pomsg", methods=['POST'])
 def pomsg():
     return redirect(url_for('home'))
 
-@application.route("/delmsg/<msgid>", methods=['GET'])
+@application.route("/delmsg/<msgid>", methods=['POST'])
 def delmsg():
     return redirect(url_for('home'))
 
 @application.route("/profile")
 def profile():
-    return render_template('profile.html')
+    if not session.get('logged_in'):
+        redirect(url_for('index'))
+    profile_info = ast.literal_eval(redis.hget('user', session['logged_in']))
+    profile_info.pop('password', None)
+    profile_info['register time'] = profile_info.pop('regtime')
+    return render_template('profile.html', profile_info=profile_info)
 
 @application.route("/logout")
 def logout():

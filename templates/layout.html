@@ -4,10 +4,13 @@
 <div class=page>
     <a href="{{url_for('index')}}"><h1>Welcome to TC</h1></a>
     {% if not session.logged_in %}
-        <a href="{{ url_for('login') }}">log in</a>
+        <a href="{{ url_for('login') }}">login</a>
         <a href="{{ url_for('register') }}">register</a>
     {% else %}
-        <a href="{{ url_for('logout') }}">log out</a>
+        <a href="{{ url_for('index') }}">index</a>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('profile') }}">profile</a>         
+        <a href="{{ url_for('logout') }}">logout</a>
     {% endif %}
     {% for message in get_flashed_messages() %}
         <div>{{ message }}</div>
