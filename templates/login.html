@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>login</h2>
+{% if not session.logged_in %}
+<form action="{{ url_for('verify_login') }}" method=post>
+    <div>{{ form.username.label }}: {{ form.username() }}</div>
+    <div>{{ form.password.label }}: {{ form.password() }}</div>
+    <input type=submit value=login>
+</form>
+<a href="{{ url_for('register') }}">register</a>
+{% endif %}
+{% endblock %}
