@@ -1,4 +1,20 @@
 {% extends "layout.html" %}
 {% block body %}
 <h2>home</h2>
+{% if session.logged_in %}
+    <form action="{{ url_for('pomsg') }}" method=post>
+        <div>{{ form.message.label }}</div> 
+        <div>{{ form.message() }}</div>
+        <div>{{ form.submit }}</div>
+    </form>
+    {% for item in msgs %}
+        <div id={{ item.mid }}>
+        <td>{{ item.user }}</td>
+        <tt>{{ item.time }}</tt>
+        <tt>{{ item.message }}</tt>
+        <a href="/delmsg/{{ item.mid }}" method=get>delete</a>
+        <br />
+        </div>
+    {% endfor %}
+{% endif %}
 {% endblock %}

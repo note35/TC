@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask.ext.redis import FlaskRedis
 
 from models.users import RegistrationForm, LoginForm
+from models.messages import PostForm, DeleteForm 
 
 import hashlib
 import time
@@ -13,7 +14,17 @@ redis = FlaskRedis(application)
 
 @application.route("/")
 def index():
-    return render_template('index.html')
+    msg_list = redis.lrange('messages', 0, redis.llen('messages'))
+    msgs = []
+    if msg_list:
+        for mid in msg_list:
+            msg = ast.literal_eval(redis.hget('message', mid))
+            msgs.append(msg)
+    if not session.get('logged_in'):
+        return render_template('index.html', msgs=msgs)
+    else:
+        dform = DeleteForm()
+        return render_template('index.html', dform=dform, msgs=msgs)      
 
 @application.route("/login")
 def login():
@@ -90,14 +101,49 @@ def verify_register():
 
 @application.route("/home")
 def home():
-    return render_template('home.html')
+    if not session.get('logged_in'):
+        redirect(url_for('index'))
+    form = PostForm()
+    dform = DeleteForm()
+    msg_list_by_id = redis.lrange('messages:'+session['logged_in'], 0, redis.llen('messages:'+session['logged_in']))
+    print msg_list_by_id 
+    msgs = []
+    if msg_list_by_id:
+        for mid in msg_list_by_id:
+            msg = ast.literal_eval(redis.hget('message', mid))
+            msgs.append(msg)
+    print msgs
+    return render_template('home.html', form=form, dform=dform, msgs=msgs)
 
 @application.route("/pomsg", methods=['POST'])
 def pomsg():
+    if not session.get('logged_in'):
+        redirect(url_for('index'))
+    form = PostForm(request.form)
+    if request.method == 'POST' and form.validate():
+        if redis.lrange('messages', 0, 1):
+            ori_last_mid = int(redis.lrange('messages', 0, 1)[0])
+        else:
+            ori_last_mid = 0
+
+        redis.lpush('messages', str(ori_last_mid+1))
+        redis.lpush('messages:'+session['logged_in'], str(ori_last_mid+1))
+        redis.hset('message', str(ori_last_mid+1), 
+             {  'mid': str(ori_last_mid+1),
+                'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
+                'user': session['logged_in'],   
+                'message': form.message.data })
     return redirect(url_for('home'))
 
-@application.route("/delmsg/<msgid>", methods=['POST'])
-def delmsg():
+@application.route("/delmsg/<msg_id>", methods=['GET'])
+def delmsg(msg_id):
+    if not session.get('logged_in'):
+        redirect(url_for('index')) 
+    if request.method == 'GET':
+        if ast.literal_eval(redis.hget('message', msg_id))['user'] == session['logged_in']:
+            redis.hdel('message', msg_id)
+            redis.lrem('messages', msg_id)
+            redis.lrem('messages:'+session['logged_in'], msg_id)
     return redirect(url_for('home'))
 
 @application.route("/profile")
