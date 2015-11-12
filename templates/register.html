@@ -1,13 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
 <h2>Register</h2>
-
 {% if not session.logged_in %}
-<form action="{{ url_for('verify_register') }}" method=post>
-    <div>{{ form.username.label }}: {{ form.username() }}</div>
-    <div>{{ form.password.label }}: {{ form.password() }}</div>
-    <div>{{ form.confirm_password.label }}: {{ form.confirm_password() }}</div>
-    <div>{{ form.submit() }}</div>
+<form role="form" action="{{ url_for('verify_register') }}" method=post>
+        <label for="username">{{ form.username.label }}</label>
+        {{ form.username(class="form-control", id="username") }}
+        <label for="password">{{ form.password.label }}</label>
+        {{ form.password(class="form-control", id="password") }}
+        <label for="confirm_password">{{ form.confirm_password.label }}</label>
+        {{ form.confirm_password(class="form-control", id="confirm_password") }}
+        {{ form.submit(value="register", class="btn btn-link", style="color:green") }}
+    </div>
 </form>
 {% endif %}
 {% endblock %}

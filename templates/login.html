@@ -2,11 +2,17 @@
 {% block body %}
 <h2>login</h2>
 {% if not session.logged_in %}
-<form action="{{ url_for('verify_login') }}" method=post>
-    <div>{{ form.username.label }}: {{ form.username() }}</div>
-    <div>{{ form.password.label }}: {{ form.password() }}</div>
-    <div>{{ form.submit() }}</div>
+<form role="form" action="{{ url_for('verify_login') }}" method=post>
+    <div class="form-group"> 
+        <label for="username">{{ form.username.label }}</label> 
+        {{ form.username(class="form-control", id="username") }}
+        <label for="password">{{ form.password.label }}</label> 
+        {{ form.password(class="form-control", id="password") }}
+        {{ form.submit(value="login", class="btn btn-link", style="color:green") }}
+        <button class="btn btn-link">
+            <a href="{{ url_for('register') }}" style="text-decoration:none; color:green">register</a>
+        </button>
+    </div>
 </form>
-<a href="{{ url_for('register') }}">register</a>
 {% endif %}
 {% endblock %}

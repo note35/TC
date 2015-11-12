@@ -1,22 +1,37 @@
 <!doctype html>
 <title>TC</title>
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-<div class=page>
-    <a href="{{url_for('index')}}"><h1>Welcome to TC</h1></a>
-    {% if not session.logged_in %}
-        <a href="{{ url_for('login') }}">login</a>
-        <a href="{{ url_for('register') }}">register</a>
-    {% else %}
-        <a href="{{ url_for('index') }}">index</a>
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('profile') }}">profile</a>         
-        <a href="{{ url_for('logout') }}">logout</a>
-    {% endif %}
-    {% for message in get_flashed_messages() %}
-        <div>{{ message }}</div>
-    {% endfor %}
-    {% block body %}
+<nav class="navbar navbar-inverse">
+<div class="container-fluid">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Welcome to TC</a>
+    </div>
+    <div>
+        {% if not session.logged_in %}
+        <ul class="nav navbar-nav navbar-right">
+            <li class="active"><a href="{{ url_for('login') }}">login</a></li>
+            <li><a href="{{ url_for('register') }}">register</a></li>
+        </ul>
+        {% else %}
+        <ul class="nav navbar-nav">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('profile') }}">profile</a></li>        
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+              <li><a href="{{ url_for('logout') }}">logout</a></li>
+        </ul>
+        {% endif %}
+        </ul>
+        </div>
+    </div>
+</div>
+</nav>
+{% for message in get_flashed_messages() %}
+    <div class="alert alert-danger" data-offset="50"><strong>{{ message }}</strong></div>
+{% endfor %}
+<div class=container>
+{% block body %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    {% endblock %}
+{% endblock %}
 </div>

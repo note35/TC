@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask.ext.redis import FlaskRedis
 
 from models.users import RegistrationForm, LoginForm
-from models.messages import PostForm, DeleteForm 
+from models.messages import PostForm 
 
 import hashlib
 import time
@@ -20,11 +20,7 @@ def index():
         for mid in msg_list:
             msg = ast.literal_eval(redis.hget('message', mid))
             msgs.append(msg)
-    if not session.get('logged_in'):
-        return render_template('index.html', msgs=msgs)
-    else:
-        dform = DeleteForm()
-        return render_template('index.html', dform=dform, msgs=msgs)      
+    return render_template('index.html', msgs=msgs)
 
 @application.route("/login")
 def login():
@@ -104,7 +100,6 @@ def home():
     if not session.get('logged_in'):
         redirect(url_for('index'))
     form = PostForm()
-    dform = DeleteForm()
     msg_list_by_id = redis.lrange('messages:'+session['logged_in'], 0, redis.llen('messages:'+session['logged_in']))
     print msg_list_by_id 
     msgs = []
@@ -113,7 +108,7 @@ def home():
             msg = ast.literal_eval(redis.hget('message', mid))
             msgs.append(msg)
     print msgs
-    return render_template('home.html', form=form, dform=dform, msgs=msgs)
+    return render_template('home.html', form=form, msgs=msgs)
 
 @application.route("/pomsg", methods=['POST'])
 def pomsg():
@@ -152,7 +147,6 @@ def profile():
         redirect(url_for('index'))
     profile_info = ast.literal_eval(redis.hget('user', session['logged_in']))
     profile_info.pop('password', None)
-    profile_info['register time'] = profile_info.pop('regtime')
     return render_template('profile.html', profile_info=profile_info)
 
 @application.route("/logout")

@@ -1,8 +1,21 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>Profile</h2>
-{% for key, value in profile_info.iteritems() %}
-    <dt>{{ key }}</dt>
-    <dd>{{ value }}</dd>
-{% endfor %}
+<div class="container">
+    <table class="table">
+        <tbody>
+            <tr class="success">
+                <th>username</th>
+                <td>{{ profile_info.username }}</td>
+            </tr>
+            <tr>
+                <th>uid</th>
+                <td>{{ profile_info.uid }}</td>
+            </tr>
+            <tr>
+                <th>since</th>
+                <td>{{ profile_info.regtime }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 {% endblock %}

@@ -1,12 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>index</h2>
 {% for item in msgs %}
-    <div id={{ item.mid }}>
-    <td>{{ item.user }}</td>
-    <tt>{{ item.time }}</tt>
-    <tt>{{ item.message }}</tt>
-    <br />
-    </div>
+<div id={{ item.mid }} class="panel-group">
+    <div class="panel panel-success">
+    <div class="panel-heading">{{ item.user }} @ {{item.time}}</div>
+    <div class="panel-body">{{ item.message }}</div> 
+</div>
+<hr/>
 {% endfor %}
 {% endblock %}
