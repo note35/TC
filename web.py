@@ -69,6 +69,7 @@ def verify_register():
     if session.get('logged_in'):
         redirect(url_for('home'))
     if request.method == 'POST' and form.validate():
+      try:
         if redis.hget('user', form.username.data) == None:
             if form.password.data == form.confirm_password.data:
                 if redis.lrange('users', 0, 1):
@@ -90,6 +91,9 @@ def verify_register():
         else:
             flash('username is be used!')
             return redirect(url_for('register'))
+      except Exception, e:
+        print str(e.args)
+
     else:
         flash('invalid format!')
         return redirect(url_for('register'))
@@ -101,13 +105,11 @@ def home():
         redirect(url_for('index'))
     form = PostForm()
     msg_list_by_id = redis.lrange('messages:'+session['logged_in'], 0, redis.llen('messages:'+session['logged_in']))
-    print msg_list_by_id 
     msgs = []
     if msg_list_by_id:
         for mid in msg_list_by_id:
             msg = ast.literal_eval(redis.hget('message', mid))
             msgs.append(msg)
-    print msgs
     return render_template('home.html', form=form, msgs=msgs)
 
 @application.route("/pomsg", methods=['POST'])
@@ -139,6 +141,7 @@ def delmsg(msg_id):
             redis.hdel('message', msg_id)
             redis.lrem('messages', msg_id)
             redis.lrem('messages:'+session['logged_in'], msg_id)
+    flash ('delete messages ' + msg_id + ' successfully!')
     return redirect(url_for('home'))
 
 @application.route("/profile")
@@ -152,10 +155,11 @@ def profile():
 @application.route("/logout")
 def logout():
     session.pop('logged_in', None)
-    flash('logout successfully')
+    flash('logout successfully!')
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
     application.secret_key = 'super secret key'
+    application.config['SESSION_TYPE'] = 'filesystem'
     application.debug = True
     application.run()

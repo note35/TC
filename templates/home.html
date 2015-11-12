@@ -10,10 +10,11 @@
     {% for item in msgs %}
     <div id={{ item.mid }} class="panel-group">
         <div class="panel panel-success">
-        <div class="panel-heading">{{ item.user }} @ {{item.time}}
-            <button type="button" class="btn btn-link btn-xsm">
-                <a href="/delmsg/{{ item.mid }}" method=get style="text-decoration:none; color:green">delete</a>
-            </button>
+            <div class="panel-heading">{{ item.user }} @ {{item.time}}
+                <button type="button" class="btn btn-link btn-xsm">
+                    <a href="/delmsg/{{ item.mid }}" method=get style="text-decoration:none; color:green">delete</a>
+                </button>
+            </div>
         </div>
         <div class="panel-body">{{ item.message }}</div> 
     </div>
