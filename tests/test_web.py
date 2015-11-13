@@ -5,6 +5,7 @@ sys.path.append(topdir)
 import unittest
 import tempfile
 import random
+import re
 
 from flask.ext.redis import FlaskRedis
 import web
@@ -48,6 +49,12 @@ class FlaskrTestCase(unittest.TestCase):
         return self.app.get('/home', follow_redirects = True)
 
     def delmsg(self, msg):
+        '''
+        Warning: it only test delete the latest message, it can be improved
+        Now:    1) user kir login
+                2) post a new message
+                3) delete that message 
+        '''
         self.login('kir', '1111')
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
@@ -55,9 +62,9 @@ class FlaskrTestCase(unittest.TestCase):
         page = self.app.post('/pomsg', data=dict(
             message = 'user_' + str(TURN) + '_' + msg
         ), follow_redirects = True) 
-        print page.data
-        #To do: find the first <div id=22 pattern in this data
-        #return self.app.get('/home', follow_redirects = True)
+        all_id = re.findall('id=\d+ class="panel-group"', page.data)
+        target_id = all_id[0].split(' ')[0][3:]
+        return self.app.get('/delmsg/'+target_id, follow_redirects = True)
 
     def test_index(self):
         rv = self.app.get('/', follow_redirects=True)
@@ -106,20 +113,21 @@ class FlaskrTestCase(unittest.TestCase):
 
     '''
     @@@ Alert: Need to be sloved!!! @@@
+    '''
     def test_login_success2(self):
         self.register('test_'+str(TURN+1), '1111', '1111')
-        self.login('test_'+str(TURN+1), '1111')
+        rv = self.login('test_'+str(TURN+1), '1111')
         assert 'login successfully!' in rv.data
+    '''
     '''
 
     def test_post_messages(self):
         rv = self.pomsgs('test post message :)')
         assert 'test post message :)' in rv.data
 
-    '''
     def test_delete_message_success(self):
-        self.delmsg('test delete message')
-    '''
+        rv = self.delmsg('test delete message')
+        assert 'delete messages successfully!' in rv.data
 
     def test_profile(self):
         self.login('kir', '1111')

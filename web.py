@@ -141,7 +141,7 @@ def delmsg(msg_id):
             redis.hdel('message', msg_id)
             redis.lrem('messages', msg_id)
             redis.lrem('messages:'+session['logged_in'], msg_id)
-    flash ('delete messages ' + msg_id + ' successfully!')
+    flash ('delete messages successfully!')
     return redirect(url_for('home'))
 
 @application.route("/profile")
