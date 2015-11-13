@@ -38,7 +38,7 @@ class FlaskrTestCase(unittest.TestCase):
         ), follow_redirects = True)
 
     def pomsgs(self, msg):
-        self.login('kir', '1111')
+        self.login('kira', '1111')
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = None 
@@ -51,11 +51,11 @@ class FlaskrTestCase(unittest.TestCase):
     def delmsg(self, msg):
         '''
         Warning: it only test delete the latest message, it can be improved
-        Now:    1) user kir login
+        Now:    1) user kira login
                 2) post a new message
                 3) delete that message 
         '''
-        self.login('kir', '1111')
+        self.login('kira', '1111')
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = None 
@@ -81,7 +81,7 @@ class FlaskrTestCase(unittest.TestCase):
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = None
-        rv = self.register('kir', '1111', '1111')
+        rv = self.register('kira', '1111', '1111')
         assert 'username is be used!' in rv.data
 
     def test_register_success(self):
@@ -108,18 +108,14 @@ class FlaskrTestCase(unittest.TestCase):
         assert 'no such user!' in rv.data
 
     def test_login_success(self):
-        rv = self.login('kir', '1111')
+        rv = self.login('kira', '1111')
         assert 'login successfully!' in rv.data
 
-    '''
-    @@@ Alert: Need to be sloved!!! @@@
-    '''
     def test_login_success2(self):
         self.register('test_'+str(TURN+1), '1111', '1111')
+        self.app.get('/logout', follow_redirects = True)
         rv = self.login('test_'+str(TURN+1), '1111')
         assert 'login successfully!' in rv.data
-    '''
-    '''
 
     def test_post_messages(self):
         rv = self.pomsgs('test post message :)')
@@ -130,9 +126,9 @@ class FlaskrTestCase(unittest.TestCase):
         assert 'delete messages successfully!' in rv.data
 
     def test_profile(self):
-        self.login('kir', '1111')
+        self.login('kira', '1111')
         rv = self.app.get('/profile', follow_redirects = True)
-        assert '<td>kir</td>' in rv.data
+        assert '<td>kira</td>' in rv.data
 
 if __name__ == '__main__':
     #TEST_USER_RANDOM_NUMBER

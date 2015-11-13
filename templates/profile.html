@@ -1,6 +1,29 @@
 {% extends "layout.html" %}
 {% block body %}
+<script>
+$(window).load(function(){
+    $("img").each(function(i){
+        if($(this).attr("alumb")=="true"){
+            $(this).removeAttr('width');
+            $(this).removeAttr('height');
+            var imgW = $(this).width();
+            var imgH = $(this).height();
+            var w=$(this).attr("_w")/imgW;
+            var h=$(this).attr("_h")/imgH;
+            var pre=1;
+            if(w>h){pre=h;}
+            else{pre=w;}
+            $(this).width(imgW*pre);
+            $(this).height(imgH*pre);
+        }
+    });
+});
+</script>
+
 <div class="container">
+    <div class="panel panel-default" align="center">
+        <img src="{{ session.avatar }}" alumb="true" _w="100" _h="100" width="360"/>
+    </div>
     <table class="table">
         <tbody>
             <tr class="success">
