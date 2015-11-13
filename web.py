@@ -50,6 +50,8 @@ def verify_login():
                 flash('wrong password!')                 
         else:
             flash('no such user!')
+    elif request.method == 'POST' and not form.validate():
+        flash_errors(form) 
     return redirect(url_for('login')) 
 
 @application.route("/register")
@@ -130,6 +132,8 @@ def pomsg():
                 'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                 'user': session['logged_in'],   
                 'message': form.message.data })
+    elif request.method == 'POST' and not form.validate():
+        flash_errors(form)
     return redirect(url_for('home'))
 
 @application.route("/delmsg/<msg_id>", methods=['GET'])
@@ -157,6 +161,14 @@ def logout():
     session.pop('logged_in', None)
     flash('logout successfully!')
     return redirect(url_for('index'))
+
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ))
 
 if __name__ == "__main__":
     application.secret_key = 'super secret key'
