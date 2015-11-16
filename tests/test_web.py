@@ -15,7 +15,7 @@ class FlaskrTestCase(unittest.TestCase):
     def setUp(self):
         self.app = web.application.test_client()
         web.redis = FlaskRedis(web.application)
-        web.application.config['SECRET_KEY'] = 'test'
+        web.application.config['SECRET_KEY'] = 'testtt'
         #web.redis.flushdb()
 
     def tearDown(self):
@@ -81,6 +81,8 @@ class FlaskrTestCase(unittest.TestCase):
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = None
+        rv = self.register('kira', '1111', '1111')
+        rv = self.app.get('/logout', follow_redirects = True) 
         rv = self.register('kira', '1111', '1111')
         assert 'username is be used!' in rv.data
 

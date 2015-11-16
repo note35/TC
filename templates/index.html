@@ -3,8 +3,15 @@
 {% for item in msgs %}
 <div id={{ item.mid }} class="panel-group">
     <div class="panel panel-success">
-    <div class="panel-heading">{{ item.user }} @ {{item.time}}</div>
-    <div class="panel-body">{{ item.message }}</div> 
+        <div class="panel-heading">
+            <img src="{{item.avatar}}" height="25" width="25"/>
+            {{ item.user }} @ {{item.time}}
+        </div>
+        <div class="panel-body">{{ item.message }}</div> 
+        {% if item.image_data %}
+            <img src="data:image;base64,{{ item.image_data }}" />
+        {% endif %}
+    </div>
 </div>
 <hr/>
 {% endfor %}

@@ -6,7 +6,5 @@ images = UploadSet('images', IMAGES)
  
 class PostForm(Form):
     message = TextAreaField('message', [validators.Length(min=1, max=250)])
-    upload = FileField('image', validators=[
-        FileAllowed(images, 'Images only!')
-    ])
+    upload = FileField('image', validators=[FileAllowed(images, 'Images only!')])
     submit = SubmitField('submit')

@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 {% if session.logged_in %}
-    <form role="form" action="{{ url_for('pomsg') }}" method=post>
+    <form role="form" action="{{ url_for('pomsg') }}" method=post enctype=multipart/form-data >
         <div class="form-group">
             {{ form.message(class="form-control", id="message") }}
             {{ form.upload(class="form-control", id="upload") }}
@@ -11,13 +11,19 @@
     {% for item in msgs %}
     <div id={{ item.mid }} class="panel-group">
         <div class="panel panel-success">
-            <div class="panel-heading">{{ item.user }} @ {{item.time}}
+            <div class="panel-heading">
+                <img src="{{session.avatar}}" height="25" width="25"/>
+                {{ item.user }} @ {{item.time}}
                 <button type="button" class="btn btn-link btn-xsm">
                     <a href="/delmsg/{{ item.mid }}" method=get style="text-decoration:none; color:green">delete</a>
                 </button>
             </div>
-        </div>
-        <div class="panel-body">{{ item.message }}</div> 
+            <div class="panel-body">{{ item.message }}</div> 
+            {% if item.image_data %}
+                <img src="data:image;base64,{{ item.image_data }}" />
+            {% endif %}
+            </div>
+            {{ form.csrf_token }}
     </div>
     <hr/>
     {% endfor %}

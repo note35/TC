@@ -6,6 +6,7 @@ from models.messages import PostForm
 
 from lib import s3
 
+from werkzeug.utils import secure_filename
 from oauth2client.client import flow_from_clientsecrets
 from apiclient import discovery
 import httplib2
@@ -24,11 +25,15 @@ def index():
     if msg_list:
         for mid in msg_list:
             msg = ast.literal_eval(redis.hget('message', mid))
+            if msg['user'].split(':')[0] == 'google':
+                msg['user'] = msg['user'].split(':')[2] 
+            if 'image' in msg:
+                msg['image_data'] = s3.s3_get(msg['image'])
             msgs.append(msg)
     return render_template('index.html', msgs=msgs)
 
 def create_flow():
-    return flow_from_clientsecrets('client_secret.json2.swp', scope='openid profile',
+    return flow_from_clientsecrets('static/client_secret.json', scope='openid profile',
                                    redirect_uri=url_for('oauth2cb', _external=True))
 
 def flow_step_1():
@@ -55,20 +60,20 @@ def oauth2cb():
     if 'code' in request.args:
         goog_user_id, user_given_name, goog_user_avatar = flow_step_2(request.args['code'])
         # if you haven't login, add user
-        if redis.hget('user', 'google:'+user_given_name) == None:
+        if redis.hget('user', 'google:'+goog_user_id+':'+user_given_name) == None:
             if redis.lrange('users', 0, 1):
                 ori_last_uid = int(redis.lrange('users', 0, 1)[0])
             else:
                 ori_last_uid = 0
             redis.lpush('users', str(ori_last_uid+1))
-            redis.hset('user', 'google'+goog_user_id+':'+user_given_name, 
+            redis.hset('user', 'google:'+goog_user_id+':'+user_given_name, 
                 {   'uid':ori_last_uid+1,
                     'goog_user_id':goog_user_id,
                     'goog_user_avatar': goog_user_avatar,
                     'username':user_given_name,
                     'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) })
         flash('login successfully!')
-        session['logged_in'] = 'google'+goog_user_id+':'+user_given_name 
+        session['logged_in'] = 'google:'+goog_user_id+':'+user_given_name 
         session['avatar'] = goog_user_avatar
         return redirect(url_for('home'))
     else:
@@ -92,7 +97,7 @@ def verify_login():
             login_user = ast.literal_eval(redis.hget('user', form.username.data)) 
             if login_user['password'] == hashlib.sha224(form.password.data).hexdigest():
                 flash('login successfully!')
-                session['logged_in'] = 'local:'+form.username.data
+                session['logged_in'] = form.username.data
                 return redirect(url_for('home'))
             else:
                 flash('wrong password!')                 
@@ -104,10 +109,6 @@ def verify_login():
 
 @application.route("/register")
 def register():
-    #debug
-    #pp = PrettyPrinter()
-    #print redis.lrange('users', 0, redis.llen('users'))
-    #pp.pprint(redis.hgetall('user'))
     form = RegistrationForm()
     if session.get('logged_in'):
         redirect(url_for('home'))
@@ -118,7 +119,7 @@ def verify_register():
     form = RegistrationForm(request.form)
     if session.get('logged_in'):
         redirect(url_for('home'))
-    if request.method == 'POST' and form.validate():
+    if request.method == 'POST' and form.validate() and ':' not in form.username.data:
         try:
             if redis.hget('user', form.username.data) == None:
                 if form.password.data == form.confirm_password.data:
@@ -127,13 +128,13 @@ def verify_register():
                     else:
                         ori_last_uid = 0
                     redis.lpush('users', str(ori_last_uid+1))
-                    redis.hset('user', 'local:'+form.username.data, 
+                    redis.hset('user', form.username.data, 
                         {   'uid':ori_last_uid+1,
                             'username':form.username.data,
                             'password':hashlib.sha224(form.password.data).hexdigest(),
                             'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) })
                     flash('register successfully!')
-                    session['logged_in'] = 'local:'+form.username.data
+                    session['logged_in'] = form.username.data
                     return redirect(url_for('home'))
                 else:
                     flash('password is not equal to confirm password, try again!')
@@ -143,7 +144,6 @@ def verify_register():
                 return redirect(url_for('register'))
         except Exception, e:
             print str(e.args)
-
     else:
         flash('invalid format!')
         return redirect(url_for('register'))
@@ -159,7 +159,11 @@ def home():
     if msg_list_by_id:
         for mid in msg_list_by_id:
             msg = ast.literal_eval(redis.hget('message', mid))
+            if msg['user'].split(':')[0] == 'google':
+                msg['user'] = msg['user'].split(':')[2]
             msgs.append(msg)
+            if 'image' in msg:
+                msg['image_data'] = s3.s3_get(msg['image'])
     return render_template('home.html', form=form, msgs=msgs)
 
 @application.route("/pomsg", methods=['POST'])
@@ -172,14 +176,20 @@ def pomsg():
             ori_last_mid = int(redis.lrange('messages', 0, 1)[0])
         else:
             ori_last_mid = 0
+        message ={  'mid': str(ori_last_mid+1),
+                    'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
+                    'user': session['logged_in'], 
+                    'message': form.message.data }
+        image = request.files[form.upload.name]
+        if image:
+            filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
+            s3.s3_put(filename, image)
+            message['image'] = filename
 
         redis.lpush('messages', str(ori_last_mid+1))
         redis.lpush('messages:'+session['logged_in'], str(ori_last_mid+1))
-        redis.hset('message', str(ori_last_mid+1), 
-             {  'mid': str(ori_last_mid+1),
-                'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
-                'user': session['logged_in'].split(':')[1], 
-                'message': form.message.data })
+        redis.hset('message', str(ori_last_mid+1), message) 
+
     elif request.method == 'POST' and not form.validate():
         flash_errors(form)
     return redirect(url_for('home'))
@@ -189,13 +199,10 @@ def delmsg(msg_id):
     if not session.get('logged_in'):
         redirect(url_for('index')) 
     if request.method == 'GET':
-
-        where = ""
-        if 'local' in session['logged_in'].split(':')[0]:
-            where = 'local:'
-        elif 'google' in session['logged_in'].split(':')[0]:
-            where = session['logged_in'].split(':')[0] + ':'
-        if where + ast.literal_eval(redis.hget('message', msg_id))['user'] == session['logged_in']:
+        msg = ast.literal_eval(redis.hget('message', msg_id))
+        if msg['user'] == session['logged_in']:
+            if msg['image']:
+                s3.s3_delete(msg['image'])
             redis.hdel('message', msg_id)
             redis.lrem('messages', msg_id)
             redis.lrem('messages:'+session['logged_in'], msg_id)
