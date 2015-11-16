@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, Flask, render_template, request, redirect, url_for, session, flash
 from flask.ext.redis import FlaskRedis
 
 from models.users import RegistrationForm, LoginForm
 from models.messages import PostForm 
 
-from lib import s3
+from decorator import login_required, login_not_required
+#from views.index import index_blueprint
+
+from lib import s3#, db_cmd
 
 from werkzeug.utils import secure_filename
 from oauth2client.client import flow_from_clientsecrets
@@ -13,24 +16,25 @@ import httplib2
 import hashlib
 import time
 import ast
-from pprint import PrettyPrinter
 
 application = Flask(__name__)
+#db = db_cmd(application)
 redis = FlaskRedis(application)
 
-@application.route("/")
+#application.register_blueprint(index_blueprint)
+@application.route('/')
 def index():
-    msg_list = redis.lrange('messages', 0, redis.llen('messages'))
-    msgs = []
-    if msg_list:
-        for mid in msg_list:
-            msg = ast.literal_eval(redis.hget('message', mid))
-            if msg['user'].split(':')[0] == 'google':
-                msg['user'] = msg['user'].split(':')[2] 
-            if 'image' in msg:
-                msg['image_data'] = s3.s3_get(msg['image'])
-            msgs.append(msg)
-    return render_template('index.html', msgs=msgs)
+    message_list = redis.lrange('messages', 0, redis.llen('messages'))
+    messages = []
+    if message_list:
+        for mid in message_list:
+            message = ast.literal_eval(redis.hget('message', mid))
+            if message['user'].split(':')[0] == 'google':
+                message['user'] = message['user'].split(':')[2] 
+            if 'image' in message:
+                message['image_data'] = s3.s3_get(message['image'])
+            messages.append(message)
+    return render_template('index.html', msgs=messages)
 
 def create_flow():
     return flow_from_clientsecrets('static/client_secret.json', scope='openid profile',
@@ -81,18 +85,16 @@ def oauth2cb():
         return redirect(url_for('index'))
 
 @application.route("/login")
+@login_not_required
 def login():
     form = LoginForm()
-    if session.get('logged_in'):
-        redirect(url_for('home'))
     return render_template('login.html', form=form) 
 
 @application.route("/verify_login", methods=['POST'])
+@login_not_required
 def verify_login():
     form = LoginForm(request.form)
-    if session.get('logged_in'):
-        redirect(url_for('home')) 
-    elif request.method == 'POST' and form.validate():
+    if request.method == 'POST' and form.validate():
         if redis.hget('user', form.username.data):
             login_user = ast.literal_eval(redis.hget('user', form.username.data)) 
             if login_user['password'] == hashlib.sha224(form.password.data).hexdigest():
@@ -108,17 +110,15 @@ def verify_login():
     return redirect(url_for('login')) 
 
 @application.route("/register")
+@login_not_required
 def register():
     form = RegistrationForm()
-    if session.get('logged_in'):
-        redirect(url_for('home'))
     return render_template('register.html', form=form)
 
 @application.route("/verify_register", methods=['POST'])
+@login_not_required
 def verify_register():
     form = RegistrationForm(request.form)
-    if session.get('logged_in'):
-        redirect(url_for('home'))
     if request.method == 'POST' and form.validate() and ':' not in form.username.data:
         try:
             if redis.hget('user', form.username.data) == None:
@@ -150,26 +150,24 @@ def verify_register():
     return redirect(url_for('index'))
 
 @application.route("/home")
+@login_required
 def home():
-    if not session.get('logged_in'):
-        redirect(url_for('index'))
     form = PostForm()
-    msg_list_by_id = redis.lrange('messages:'+session['logged_in'], 0, redis.llen('messages:'+session['logged_in']))
-    msgs = []
-    if msg_list_by_id:
-        for mid in msg_list_by_id:
-            msg = ast.literal_eval(redis.hget('message', mid))
-            if msg['user'].split(':')[0] == 'google':
-                msg['user'] = msg['user'].split(':')[2]
-            msgs.append(msg)
-            if 'image' in msg:
-                msg['image_data'] = s3.s3_get(msg['image'])
-    return render_template('home.html', form=form, msgs=msgs)
+    message_list_by_id = redis.lrange('messages:'+session['logged_in'], 0, redis.llen('messages:'+session['logged_in']))
+    messages = []
+    if message_list_by_id:
+        for mid in message_list_by_id:
+            message = ast.literal_eval(redis.hget('message', mid))
+            if message['user'].split(':')[0] == 'google':
+                message['user'] = message['user'].split(':')[2]
+            messages.append(message)
+            if 'image' in message:
+                message['image_data'] = s3.s3_get(message['image'])
+    return render_template('home.html', form=form, msgs=messages)
 
 @application.route("/pomsg", methods=['POST'])
+@login_required
 def pomsg():
-    if not session.get('logged_in'):
-        redirect(url_for('index'))
     form = PostForm(request.form)
     if request.method == 'POST' and form.validate():
         if redis.lrange('messages', 0, 1):
@@ -194,22 +192,20 @@ def pomsg():
         flash_errors(form)
     return redirect(url_for('home'))
 
-@application.route("/delmsg/<msg_id>", methods=['GET'])
-def delmsg(msg_id):
-    if not session.get('logged_in'):
-        redirect(url_for('index')) 
+@application.route("/delmsg/<mid>", methods=['GET'])
+@login_required
+def delmsg(mid):
     if request.method == 'GET':
-        msg = ast.literal_eval(redis.hget('message', msg_id))
-        if msg['user'] == session['logged_in']:
-            if msg['image']:
+        message = ast.literal_eval(redis.hget('message', mid))
+        if message['user'] == session['logged_in']:
+            if 'image' in message:
                 s3.s3_delete(msg['image'])
-            redis.hdel('message', msg_id)
-            redis.lrem('messages', msg_id)
-            redis.lrem('messages:'+session['logged_in'], msg_id)
+            redis.hdel('message', mid)
+            redis.lrem('messages', mid)
+            redis.lrem('messages:'+session['logged_in'], mid)
 
     flash ('delete messages successfully!')
     return redirect(url_for('home'))
-
 
 '''
 @application.route('/profile<regex(".json"):ext')
@@ -224,17 +220,15 @@ def profile():
 '''
 
 @application.route('/profile')
+@login_required
 def profile():
-    if not session.get('logged_in'):
-        redirect(url_for('index'))
-    else:
-        profile_info = ast.literal_eval(redis.hget('user', session['logged_in']))
-        profile_info.pop('password', None)
+    profile_info = ast.literal_eval(redis.hget('user', session['logged_in']))
+    profile_info.pop('password', None)
     return render_template('profile.html', profile_info=profile_info)
 
 @application.route("/logout")
 def logout():
-    session.pop('logged_in', None)
+    session.clear()
     flash('logout successfully!')
     return redirect(url_for('index'))
 
