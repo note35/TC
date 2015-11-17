@@ -45,7 +45,8 @@ class FlaskrTestCase(unittest.TestCase):
         for idx in range(random.randint(1,3)):
             self.app.post('/pomsg', data=dict(
                 message = 'user_' + str(TURN) + ' ' + str(idx) + '_' + msg
-            ), follow_redirects = True) 
+            ), follow_redirects = True)
+        #print self.app.post('/pomsg', data=dict( message = 'user_' + str(TURN) + ' ' + str(idx) + '_' + msg), follow_redirects = True)   
         return self.app.get('/home', follow_redirects = True)
 
     def delmsg(self, msg):
@@ -119,11 +120,11 @@ class FlaskrTestCase(unittest.TestCase):
         rv = self.login('test_'+str(TURN+1), '1111')
         assert 'login successfully!' in rv.data
 
-    def test_post_messages(self):
+    def test_001_post_messages(self):
         rv = self.pomsgs('test post message :)')
         assert 'test post message :)' in rv.data
 
-    def test_delete_message_success(self):
+    def test_002_delete_message_success(self):
         rv = self.delmsg('test delete message')
         assert 'delete messages successfully!' in rv.data
 

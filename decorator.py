@@ -8,7 +8,7 @@ def login_required(f):
             return f(*args, **kwargs)
         else:
             flash("You need to login first!")
-            return redirect(url_for('login'))
+            return redirect(url_for('login.login'))
     return wrap
 
 def login_not_required(f):
@@ -18,5 +18,5 @@ def login_not_required(f):
             return f(*args, **kwargs)
         else:
             flash("Please logout to do this!")
-            return redirect(url_for('home'))
+            return redirect(url_for('home.home'))
     return wrap

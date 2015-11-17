@@ -11,11 +11,9 @@ from apiclient import discovery
 import httplib2
 import hashlib
 import time
-import ast
 
 database = db()
 database.init_db()
-redis = database.get_db()
 
 login_blueprint = Blueprint('login', __name__, template_folder='templates', static_folder='static')
 
@@ -46,18 +44,15 @@ def oauth2cb():
     if 'code' in request.args:
         goog_user_id, user_given_name, goog_user_avatar = flow_step_2(request.args['code'])
         # if you haven't login, add user
-        if redis.hget('user', 'google:'+goog_user_id+':'+user_given_name) == None:
-            if redis.lrange('users', 0, 1):
-                ori_last_uid = int(redis.lrange('users', 0, 1)[0])
-            else:
-                ori_last_uid = 0
-            redis.lpush('users', str(ori_last_uid+1))
-            redis.hset('user', 'google:'+goog_user_id+':'+user_given_name, 
-                {   'uid':ori_last_uid+1,
-                    'goog_user_id':goog_user_id,
-                    'goog_user_avatar': goog_user_avatar,
-                    'username':user_given_name,
-                    'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) })
+        if database.get_user_by_username('google:'+goog_user_id+':'+user_given_name) == None:
+            ori_last_uid = database.get_latest_uid()
+            username = 'google:'+goog_user_id+':'+user_given_name
+            user_info = { 'uid':ori_last_uid+1,
+                         'goog_user_id':goog_user_id,
+                         'goog_user_avatar': goog_user_avatar,
+                         'username':user_given_name,
+                         'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) }
+            database.add_user(str(ori_last_uid+1), username, user_info)
         flash('login successfully!')
         session['logged_in'] = 'google:'+goog_user_id+':'+user_given_name 
         session['avatar'] = goog_user_avatar
@@ -77,8 +72,8 @@ def login():
 def verify_login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        if redis.hget('user', form.username.data):
-            login_user = ast.literal_eval(redis.hget('user', form.username.data)) 
+        if database.get_user_by_username(form.username.data):
+            login_user = database.get_user_by_username(form.username.data)
             if login_user['password'] == hashlib.sha224(form.password.data).hexdigest():
                 flash('login successfully!')
                 session['logged_in'] = form.username.data
