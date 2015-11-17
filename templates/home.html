@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 {% if session.logged_in %}
-    <form role="form" action="{{ url_for('pomsg') }}" method=post enctype=multipart/form-data >
+    <form role="form" action="{{ url_for('home.pomsg') }}" method=post enctype=multipart/form-data >
         <div class="form-group">
             {{ form.message(class="form-control", id="message") }}
             {{ form.upload(class="form-control", id="upload") }}

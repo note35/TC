@@ -2,7 +2,7 @@
 {% block body %}
 <h2>Register</h2>
 {% if not session.logged_in %}
-<form role="form" action="{{ url_for('verify_register') }}" method=post>
+<form role="form" action="{{ url_for('register.verify_register') }}" method=post>
         <label for="username">{{ form.username.label }}</label>
         {{ form.username(class="form-control", id="username") }}
         <label for="password">{{ form.password.label }}</label>

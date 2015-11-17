@@ -2,7 +2,7 @@
 {% block body %}
 <h2>login</h2>
 {% if not session.logged_in %}
-<form role="form" action="{{ url_for('verify_login') }}" method=post>
+<form role="form" action="{{ url_for('login.verify_login') }}" method=post>
     <div class="form-group"> 
         <label for="username">{{ form.username.label }}</label> 
         {{ form.username(class="form-control", id="username") }}
@@ -10,11 +10,11 @@
         {{ form.password(class="form-control", id="password") }}
         {{ form.submit(value="login", class="btn btn-link", style="color:green") }}
         <button class="btn btn-link">
-            <a href="{{ url_for('register') }}" style="text-decoration:none; color:green">register</a>
+            <a href="{{ url_for('register.register') }}" style="text-decoration:none; color:green">register</a>
         </button>
         <hr/>
         <button class="btn btn-link">
-            <a href="{{ url_for('google_login') }}" style="text-decoration:none; color:green">login with google</a>
+            <a href="{{ url_for('login.google_login') }}" style="text-decoration:none; color:green">login with google</a>
         </button>         
     </div>
 </form>
