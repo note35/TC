@@ -43,10 +43,13 @@ def pomsg():
                     'user': session['logged_in'], 
                     'message': postform.message.data }
         image = request.files[postform.upload.name]
-        if image:
+        if image and image.content_type.startswith('image/'):
             filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
             s3.s3_put(filename, image)
             message['image'] = filename
+        else:
+            flash("upload file error, due to wrong file-content")
+            return redirect(url_for('home.home'))
         database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
     elif request.method == 'POST' and not postform.validate():
         form.flash_errors(postform)

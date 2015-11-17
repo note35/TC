@@ -5,6 +5,7 @@ from models.users import LoginForm
 from decorator import login_not_required
 
 from lib.database import db
+from lib import form
 
 from oauth2client.client import flow_from_clientsecrets
 from apiclient import discovery
@@ -70,20 +71,20 @@ def login():
 @login_blueprint.route("/verify_login", methods=['POST'])
 @login_not_required
 def verify_login():
-    form = LoginForm(request.form)
-    if request.method == 'POST' and form.validate():
-        if database.get_user_by_username(form.username.data):
-            login_user = database.get_user_by_username(form.username.data)
-            if login_user['password'] == hashlib.sha224(form.password.data).hexdigest():
+    loginform = LoginForm(request.form)
+    if request.method == 'POST' and loginform.validate():
+        if database.get_user_by_username(loginform.username.data):
+            login_user = database.get_user_by_username(loginform.username.data)
+            if login_user['password'] == hashlib.sha224(loginform.password.data).hexdigest():
                 flash('login successfully!')
-                session['logged_in'] = form.username.data
+                session['logged_in'] = loginform.username.data
                 return redirect(url_for('home.home'))
             else:
                 flash('wrong password!')                 
         else:
             flash('no such user!')
-    elif request.method == 'POST' and not form.validate():
-        flash_errors(form) 
+    elif request.method == 'POST' and not loginform.validate():
+        form.flash_errors(loginform) 
     return redirect(url_for('login.login')) 
 
 @login_blueprint.route("/logout")

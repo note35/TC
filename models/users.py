@@ -6,8 +6,8 @@ config = ConfigParser.ConfigParser()
 config.read('key.cfg')
 
 class LoginForm(Form):
-    username = TextField ('Username')
-    password = PasswordField ('Password')
+    username = TextField ('Username', [validators.Required()])
+    password = PasswordField ('Password', [validators.Required()])
     submit = SubmitField ('submit') 
 
 class RegistrationForm(Form):
