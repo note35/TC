@@ -1,6 +1,7 @@
 *.swp
 *.rdb
 client_secret.json
+key.cfg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

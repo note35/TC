@@ -5,6 +5,7 @@ from models.users import RegistrationForm
 from decorator import login_not_required
 
 from lib.database import db
+from lib import form
 
 import hashlib
 import time
@@ -23,19 +24,19 @@ def register():
 @register_blueprint.route("/verify_register", methods=['POST'])
 @login_not_required
 def verify_register():
-    form = RegistrationForm(request.form)
-    if request.method == 'POST' and form.validate() and ':' not in form.username.data:
+    registform = RegistrationForm(request.form, captcha={'ip_address': request.remote_addr})
+    if request.method == 'POST' and registform.validate() and ':' not in registform.username.data:
         try:
-            if database.get_user_by_username(form.username.data) == None:
-                if form.password.data == form.confirm_password.data:
+            if database.get_user_by_username(registform.username.data) == None:
+                if registform.password.data == registform.confirm_password.data:
                     ori_last_uid = database.get_latest_uid()
                     user_info = { 'uid':ori_last_uid+1,
-                                  'username':form.username.data,
-                                  'password':hashlib.sha224(form.password.data).hexdigest(),
+                                  'username':registform.username.data,
+                                  'password':hashlib.sha224(registform.password.data).hexdigest(),
                                   'regtime':time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}
-                    database.add_user(str(ori_last_uid+1), form.username.data, user_info)
+                    database.add_user(str(ori_last_uid+1), registform.username.data, user_info)
                     flash('register successfully!')
-                    session['logged_in'] = form.username.data
+                    session['logged_in'] = registform.username.data
                     return redirect(url_for('home.home'))
                 else:
                     flash('password is not equal to confirm password, try again!')
@@ -45,8 +46,8 @@ def verify_register():
                 return redirect(url_for('register.register'))
         except Exception, e:
             print str(e.args)
-    else:
-        flash('invalid format!')
+    elif request.method == 'POST' and not registform.validate():
+        form.flash_errors(registform)
         return redirect(url_for('register.register'))
     return redirect(url_for('index.index'))
 

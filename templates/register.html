@@ -9,6 +9,14 @@
         {{ form.password(class="form-control", id="password") }}
         <label for="confirm_password">{{ form.confirm_password.label }}</label>
         {{ form.confirm_password(class="form-control", id="confirm_password") }}
+		<label for="recaptcha">{{ form.captcha.label }}</label>
+		<div class="g-recaptcha" data-sitekey="6LeeJRETAAAAAFhkaZ83JnEH0yaHIDFzgZziqP56">
+			{% if form.captcha.short_name == "captcha" %}
+				{{ form.captcha(class="form-control") | safe }}
+			{% else %}
+				{{ form.captcha(class="form-control") }}
+			{% endif %}
+		</div>
         {{ form.submit(value="register", class="btn btn-link", style="color:green") }}
     </div>
 </form>
