@@ -7,20 +7,35 @@ from decorator import login_required
 from lib import s3
 from lib.database import db
 from lib import form
+from lib import pagination
 
 from werkzeug.utils import secure_filename
 import time
+import json
 
 database = db()
 database.init_db()
 
 home_blueprint = Blueprint('home', __name__, template_folder='templates', static_folder='static')
-
+msgs_in_each_page = pagination.msgs_in_each_page
+ 
+@home_blueprint.route("/home/")
 @home_blueprint.route("/home")
 @login_required
 def home():
     postform = PostForm()
-    message_list_by_id = database.get_user_msg_list(session['logged_in'])
+    total_pages = len(database.get_msg_list())/msgs_in_each_page+1
+    return render_template('home.html', form=postform, total_pages=total_pages)
+
+@home_blueprint.route("/home/<request_page>")
+@login_required
+def page(request_page):
+    message_list_by_id = pagination.get_page(request_page, session['logged_in'])
+
+    if 'error' in message_list_by_id:
+        flash(str(request_page)+' page is not exist')
+        return render_template('404.html')
+
     messages = []
     if message_list_by_id:
         for mid in message_list_by_id:
@@ -30,7 +45,7 @@ def home():
             messages.append(message)
             if 'image' in message:
                 message['image_data'] = s3.s3_get(message['image'])
-    return render_template('home.html', form=postform, msgs=messages)
+    return json.dumps(messages) 
 
 @home_blueprint.route("/pomsg", methods=['POST'])
 @login_required

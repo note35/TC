@@ -1,6 +1,7 @@
 <!doctype html>
 <meta name="google-site-verification" content="p7Ulib-91_LlYJnCTVXH0Dcq4i9HqT-VYFch-0kTCyQ" />
 <title>TC</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 <nav class="navbar navbar-inverse">
 <div class="container-fluid">
@@ -15,7 +16,7 @@
         </ul>
         {% else %}
         <ul class="nav navbar-nav">
-            <li><a href="{{ url_for('home.home') }}">Home</a></li>
+            <li><a href="{{ url_for('home.home') }}">home</a></li>
             <li><a href="{{ url_for('profile.profile') }}">profile</a></li>        
         </ul>
         <ul class="nav navbar-nav navbar-right">
@@ -29,10 +30,12 @@
 {% for message in get_flashed_messages() %}
     <div class="alert alert-danger" data-offset="50"><strong>{{ message }}</strong></div>
 {% endfor %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src='https://www.google.com/recaptcha/api.js'></script>
 <div class=container>
 {% block body %}
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src='https://www.google.com/recaptcha/api.js'></script>
 {% endblock %}
 </div>
+

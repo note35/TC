@@ -1,15 +1,28 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, flash
 from lib import s3
 from lib.database import db
+from lib import pagination
+import json
 
 database = db()
 database.init_db()
 
 index_blueprint = Blueprint('index', __name__, template_folder='templates', static_folder='static')
+msgs_in_each_page = pagination.msgs_in_each_page
 
 @index_blueprint.route("/")
 def index():
-    message_list = database.get_msg_list()
+    total_pages = len(database.get_msg_list())/msgs_in_each_page+1
+    return render_template('index.html', total_pages=total_pages)
+
+@index_blueprint.route("/<request_page>")
+def page(request_page):
+    message_list = pagination.get_page(request_page)
+
+    if 'error' in message_list:
+        flash(str(request_page)+' page is not exist')
+        return render_template('404.html')
+
     messages = []
     if message_list:
         for mid in message_list:
@@ -19,4 +32,4 @@ def index():
             if 'image' in message:
                 message['image_data'] = s3.s3_get(message['image'])
             messages.append(message)
-    return render_template('index.html', msgs=messages)
+    return json.dumps(messages)

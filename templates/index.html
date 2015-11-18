@@ -1,18 +1,57 @@
 {% extends "layout.html" %}
 {% block body %}
-{% for item in msgs %}
-<div id={{ item.mid }} class="panel-group">
-    <div class="panel panel-success">
-        <div class="panel-heading">
-            <img src="{{item.avatar}}" height="25" width="25"/>
-            {{ item.user }} @ {{item.time}}
-        </div>
-        <div class="panel-body">{{ item.message }}</div> 
-        {% if item.image_data %}
-            <img src="data:image;base64,{{ item.image_data }}" />
-        {% endif %}
-    </div>
+<script type="text/javascript">
+function get_code(msg)
+{
+    var code;
+    code =  '<div id=\"' + msg['mid'] +'\" class=\"panel-group\">' +
+            '    <div class=\"panel panel-success\">' +
+            '        <div class=\"panel-heading\">';
+    if ('avatar' in msg)
+    code += '            <img src=\"'+ msg['avatar']+'\" height=\"25\" width=\"25\"/>';
+    code +=              msg['user'] + ' @ ' + msg['time'] + 
+            '        </div>' + 
+            '        <div class=\"panel-body\">'+msg['message']+'</div>';
+    if ('image_data' in msg)
+    code += '        <img src=\"data:image;base64,'+msg['image_data']+'\" />';
+    code += '    </div>' +
+            '    <hr/>' +
+            '</div>';
+    return code;
+}
+$(document).ready(function() {
+    var current_page = 1;
+    var loading = false;
+    var total_pages = {{total_pages}};
+    $.getJSON("{{url_for('index.page', request_page=1 )}}", function(msgs){
+        for (var key=0; key<msgs.length; key++)
+            $('#results').append(get_code(msgs[key]));
+    });
+    $(window).scroll(function() {
+        if($(window).scrollTop() + $(window).height() > $(document).height()*99/100) 
+        {
+            if (current_page <= total_pages && loading == false)
+            {
+                loading=true;
+                current_page++;
+                $('.animation_image').show();
+                $.getJSON("/"+current_page, function(msgs){
+                    for (var key=0; key<msgs.length; key++)
+                        $('#results').append(get_code(msgs[key]));
+                    loading=false;
+                }).fail(function(xhr, ajaxOptions, thrownError) {
+                    loading = false;
+                });
+            }
+        }
+        if (loading == false)
+            $('.animation_image').hide();
+    });
+});
+</script>
+<div id="results">
 </div>
-<hr/>
-{% endfor %}
+<div class="animation_image" style="display:none" align="center">
+    <img width="10%" height="10%" src="static/img/ajax_loader.gif"/>
+</div>
 {% endblock %}
