@@ -9,6 +9,7 @@ from lib import form
 
 import hashlib
 import time
+import ConfigParser
 
 database = db()
 database.init_db()
@@ -25,7 +26,14 @@ def register():
 @login_not_required
 def verify_register():
     registform = RegistrationForm(request.form, captcha={'ip_address': request.remote_addr})
-    if request.method == 'POST' and registform.validate() and ':' not in registform.username.data:
+    form_validator = registform.validate()
+
+    config = ConfigParser.ConfigParser()
+    config.read('key.cfg')
+    if unicode(config.get('test_only', 'captcha_allow')) == registform.captcha.data:
+        form_validator = True
+
+    if request.method == 'POST' and form_validator and ':' not in registform.username.data:
         try:
             if database.get_user_by_username(registform.username.data) == None:
                 if registform.password.data == registform.confirm_password.data:

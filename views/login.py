@@ -19,7 +19,7 @@ database.init_db()
 login_blueprint = Blueprint('login', __name__, template_folder='templates', static_folder='static')
 
 def create_flow():
-    return flow_from_clientsecrets('static/client_secret.json', scope='openid profile',
+    return flow_from_clientsecrets('client_secret.json', scope='openid profile',
                                    redirect_uri=url_for('login.oauth2cb', _external=True))
 
 def flow_step_1():

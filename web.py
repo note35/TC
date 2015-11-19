@@ -19,7 +19,12 @@ application.secret_key = 'super secret key'
 application.config['SESSION_TYPE'] = 'filesystem'
 
 if __name__ == "__main__":
+    #for online
+    #application.debug = False
+    #application.run(host='0.0.0.0', port=9000)
+
+    #for offline
     application.debug = True
     application.run(host='0.0.0.0', port=8080)
+
     session['logged_in'] = None
-    #application.run(host='52.192.157.72', port=443)
