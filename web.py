@@ -15,9 +15,10 @@ application.register_blueprint(login_blueprint)
 application.register_blueprint(home_blueprint)
 application.register_blueprint(profile_blueprint)
 
+application.secret_key = 'super secret key'
+application.config['SESSION_TYPE'] = 'filesystem'
+
 if __name__ == "__main__":
-    application.secret_key = 'super secret key'
-    application.config['SESSION_TYPE'] = 'filesystem'
     application.debug = True
     application.run(host='0.0.0.0', port=8080)
     session['logged_in'] = None

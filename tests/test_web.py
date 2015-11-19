@@ -71,6 +71,7 @@ class FlaskrTestCase(unittest.TestCase):
         rv = self.app.get('/', follow_redirects=True)
         assert 'login' in rv.data
 
+    '''
     def test_register_confirm_password_not_match(self):
         with web.application.test_client() as c:
             with c.session_transaction() as sess:
@@ -100,6 +101,7 @@ class FlaskrTestCase(unittest.TestCase):
                 sess['logged_in'] = None
         rv = self.register('test_'+str(TURN), '1111', '1111')
         assert 'register successfully!' in rv.data
+    '''
 
     def test_logout(self):
         self.login('test_'+str(TURN), '1111')
