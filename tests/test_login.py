@@ -1,12 +1,5 @@
-import os
-import sys
-topdir = os.path.join(os.path.dirname(__file__), "..")
-sys.path.append(topdir)
-
 import web
-
 import unittest
-import tempfile
 import ConfigParser 
 
 flash_config = ConfigParser.ConfigParser()
@@ -14,19 +7,9 @@ flash_config.read('config/flash.cfg')
 key_config = ConfigParser.ConfigParser()
 key_config.read('config/key.cfg')
 
-class myProxyHack(object):
-
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        environ['REMOTE_ADDR'] = environ.get('REMOTE_ADDR', '127.0.0.1')
-        return self.app(environ, start_response)
-
-class FlaskrTestCase(unittest.TestCase):
+class LoginTestCase(unittest.TestCase):
 
     def setUp(self):
-        web.application.wsgi_app = myProxyHack(web.application.wsgi_app)
         self.app = web.application.test_client()
         web.application.config['SECRET_KEY'] = 'for_test_only_YEEEEE'
         web.application.config['DEBUG'] = True
@@ -68,5 +51,11 @@ class FlaskrTestCase(unittest.TestCase):
                         key_config.get('test_only', 'not_exist_pwd'))
         assert flash_config.get('login', 'wrong_password')[1:-1] in rv.data
 
-if __name__ == '__main__':
-    unittest.main()
+    def test011_login_not_required(self):
+        rv = self.login(key_config.get('test_only', 'tester_user'),
+                        key_config.get('test_only', 'tester_pwd'))
+        rv = self.app.get('/register', follow_redirects = True)
+        print rv.data
+        assert flash_config.get('decorator', 'login_not_required')[1:-1] in rv.data
+
+       

@@ -1,12 +1,5 @@
-import os
-import sys
-topdir = os.path.join(os.path.dirname(__file__), "..")
-sys.path.append(topdir)
-
 import web
-
 import unittest
-import tempfile
 import random
 import ConfigParser 
 
@@ -14,6 +7,9 @@ flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
 key_config = ConfigParser.ConfigParser()
 key_config.read('config/key.cfg')
+
+#TEST_USER_RANDOM_NUMBER
+TURN = random.randint(10000,99999)
 
 class myProxyHack(object):
 
@@ -24,7 +20,7 @@ class myProxyHack(object):
         environ['REMOTE_ADDR'] = environ.get('REMOTE_ADDR', '127.0.0.1')
         return self.app(environ, start_response)
 
-class FlaskrTestCase(unittest.TestCase):
+class RegisterTestCase(unittest.TestCase):
 
     def setUp(self):
         web.application.wsgi_app = myProxyHack(web.application.wsgi_app)
@@ -67,9 +63,3 @@ class FlaskrTestCase(unittest.TestCase):
                             key_config.get('test_only', 'captcha_allow'),
                             key_config.get('test_only', 'captcha_allow')) 
         assert flash_config.get('register', 'register_success')[1:-1] in rv.data
-
-if __name__ == '__main__':
-    #TEST_USER_RANDOM_NUMBER
-    TURN = random.randint(10000,99999)
-    print TURN
-    unittest.main()

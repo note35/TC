@@ -28,5 +28,4 @@ if __name__ == "__main__":
     application.debug = common_config.get('flask', 'debug')
     application.run(host = common_config.get('flask','server'), 
                     port = common_config.getint('flask','port'))
-
     session['logged_in'] = None

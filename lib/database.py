@@ -9,9 +9,6 @@ class db(object):
     def init_db(self):
         self.redis = Redis()
 
-    def get_db(self):
-        return self.redis
-
     def get_msg_list(self):
         try:
             return self.redis.lrange('messages', 0, self.redis.llen('messages'))
@@ -59,6 +56,9 @@ class db(object):
             return ast.literal_eval(self.redis.hget('user', username))
         except:
             print('This user is not exist!')
+
+    def get_username_by_uid(self, uid):
+        pass
 
     def del_msg(self, mid, username):
         try:

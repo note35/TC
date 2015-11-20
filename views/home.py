@@ -60,7 +60,10 @@ def pomsg():
                     'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                     'user': session['logged_in'], 
                     'message': postform.message.data }
-        image = request.files[postform.upload.name]
+        try:
+            image = request.files[postform.upload.name]
+        except:
+            image = None
         if image:
             if image.content_type.startswith('image/'):
                 filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
