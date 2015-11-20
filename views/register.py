@@ -32,7 +32,7 @@ def verify_register():
     registform = RegistrationForm(request.form, captcha={'ip_address': request.remote_addr})
     form_validator = registform.validate()
 
-    if unicode(key_config.get('test_only', 'captcha_allow')) == registform.captcha.data:
+    if unicode(key_config.get('test_only', 'captcha_allow')) == registform.password.data:
         form_validator = True
 
     if request.method == 'POST' and form_validator and ':' not in registform.username.data:
