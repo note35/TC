@@ -46,15 +46,6 @@ class FlaskrTestCase(unittest.TestCase):
             confirm_password = confirm_password,
         ), follow_redirects = True)
 
-    def login(self, username, password):
-        with web.application.test_client() as c:
-            with c.session_transaction() as sess:
-                sess['logged_in'] = None 
-        return self.app.post('/verify_login', data=dict(
-            username = username,
-            password = password
-        ), follow_redirects = True)
-
     def test001_register_form_not_validator(self):
         rv = self.register('', '', '')
         assert 'Error in the' in rv.data
@@ -62,7 +53,7 @@ class FlaskrTestCase(unittest.TestCase):
     def test002_register_confirm_password_not_match(self):
         rv = self.register( 'test_'+str(TURN),
                             key_config.get('test_only', 'captcha_allow'),
-                            '123')
+                            key_config.get('test_only', 'not_exist_pwd'))
         assert flash_config.get('register', 'password_not_match')[1:-1] in rv.data
 
     def test003_register_user_exist(self):
