@@ -6,10 +6,6 @@ sys.path.append(topdir)
 import web
 
 import unittest
-import tempfile
-import random
-import re
-
 import ConfigParser 
 
 key_config = ConfigParser.ConfigParser()
