@@ -10,6 +10,10 @@ from lib import form
 import hashlib
 import time
 import ConfigParser
+key_config = ConfigParser.ConfigParser()
+key_config.read('config/key.cfg')
+flash_config = ConfigParser.ConfigParser()
+flash_config.read('config/flash.cfg')
 
 database = db()
 database.init_db()
@@ -28,9 +32,7 @@ def verify_register():
     registform = RegistrationForm(request.form, captcha={'ip_address': request.remote_addr})
     form_validator = registform.validate()
 
-    config = ConfigParser.ConfigParser()
-    config.read('key.cfg')
-    if unicode(config.get('test_only', 'captcha_allow')) == registform.captcha.data:
+    if unicode(key_config.get('test_only', 'captcha_allow')) == registform.captcha.data:
         form_validator = True
 
     if request.method == 'POST' and form_validator and ':' not in registform.username.data:
@@ -43,14 +45,14 @@ def verify_register():
                                   'password':hashlib.sha224(registform.password.data).hexdigest(),
                                   'regtime':time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}
                     database.add_user(str(ori_last_uid+1), registform.username.data, user_info)
-                    flash('register successfully!')
+                    flash(flash_config.get('register', 'register_success'))
                     session['logged_in'] = registform.username.data
                     return redirect(url_for('home.home'))
                 else:
-                    flash('password is not equal to confirm password, try again!')
+                    flash(flash_config.get('register', 'password_not_match'))
                     return redirect(url_for('register.register'))
             else:
-                flash('username is be used!')
+                flash(flash_config.get('register', 'user_exist'))
                 return redirect(url_for('register.register'))
         except Exception, e:
             print str(e.args)

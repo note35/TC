@@ -12,6 +12,11 @@ from apiclient import discovery
 import httplib2
 import hashlib
 import time
+import ConfigParser
+flash_config = ConfigParser.ConfigParser()
+flash_config.read('config/flash.cfg')
+common_config = ConfigParser.ConfigParser()
+common_config.read('config/common.cfg')
 
 database = db()
 database.init_db()
@@ -19,7 +24,7 @@ database.init_db()
 login_blueprint = Blueprint('login', __name__, template_folder='templates', static_folder='static')
 
 def create_flow():
-    return flow_from_clientsecrets('client_secret.json', scope='openid profile',
+    return flow_from_clientsecrets(common_config.get('login', 'google_client_secret'), scope='openid profile',
                                    redirect_uri=url_for('login.oauth2cb', _external=True))
 
 def flow_step_1():
@@ -54,12 +59,12 @@ def oauth2cb():
                          'username':user_given_name,
                          'regtime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) }
             database.add_user(str(ori_last_uid+1), username, user_info)
-        flash('login successfully!')
+        flash(flash_config.get('login', 'login_success'))
         session['logged_in'] = 'google:'+goog_user_id+':'+user_given_name 
         session['avatar'] = goog_user_avatar
         return redirect(url_for('home.home'))
     else:
-        flash('google login failed!')
+        flash(flash_config.get('login', 'login_fail'))
         return redirect(url_for('index.index'))
 
 @login_blueprint.route("/login")
@@ -76,13 +81,13 @@ def verify_login():
         if database.get_user_by_username(loginform.username.data):
             login_user = database.get_user_by_username(loginform.username.data)
             if login_user['password'] == hashlib.sha224(loginform.password.data).hexdigest():
-                flash('login successfully!')
+                flash(flash_config.get('login', 'login_success'))
                 session['logged_in'] = loginform.username.data
                 return redirect(url_for('home.home'))
             else:
-                flash('wrong password!')                 
+                flash(flash_config.get('login', 'wrong_password'))
         else:
-            flash('no such user!')
+            flash(flash_config.get('login', 'no_such_user'))
     elif request.method == 'POST' and not loginform.validate():
         form.flash_errors(loginform) 
     return redirect(url_for('login.login')) 
@@ -90,5 +95,5 @@ def verify_login():
 @login_blueprint.route("/logout")
 def logout():
     session.clear()
-    flash('logout successfully!')
+    flash(flash_config.get('login', 'logout_success'))
     return redirect(url_for('index.index'))

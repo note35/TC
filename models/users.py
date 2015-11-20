@@ -3,7 +3,7 @@ from wtfrecaptcha.fields import RecaptchaField
 import ConfigParser
 
 config = ConfigParser.ConfigParser()
-config.read('key.cfg')
+config.read('config/key.cfg')
 
 class LoginForm(Form):
     username = TextField ('Username', [validators.Required()])

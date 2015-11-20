@@ -3,6 +3,9 @@ from lib import s3
 from lib.database import db
 from lib import pagination
 import json
+import ConfigParser
+flash_config = ConfigParser.ConfigParser()
+flash_config.read('config/flash.cfg')
 
 database = db()
 database.init_db()
@@ -20,7 +23,7 @@ def page(request_page):
     message_list = pagination.get_page(request_page)
 
     if 'error' in message_list:
-        flash(str(request_page)+' page is not exist')
+        flash(flash_config.get('index', 'page_not_exist'))
         return render_template('404.html')
 
     messages = []

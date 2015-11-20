@@ -12,6 +12,9 @@ from lib import pagination
 from werkzeug.utils import secure_filename
 import time
 import json
+import ConfigParser
+flash_config = ConfigParser.ConfigParser()
+flash_config.read('config/flash.cfg')
 
 database = db()
 database.init_db()
@@ -33,7 +36,7 @@ def page(request_page):
     message_list_by_id = pagination.get_page(request_page, session['logged_in'])
 
     if 'error' in message_list_by_id:
-        flash(str(request_page)+' page is not exist')
+        flash(flash_config.get('home', 'page_not_exist'))
         return render_template('404.html')
 
     messages = []
@@ -64,7 +67,7 @@ def pomsg():
                 s3.s3_put(filename, image)
                 message['image'] = filename
             else:
-                flash("upload file error, due to wrong file-content")
+                flash(flash_config.get('home', 'upload_file_type_error'))
                 return redirect(url_for('home.home'))
         database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
     elif request.method == 'POST' and not postform.validate():
@@ -80,6 +83,5 @@ def delmsg(mid):
             if 'image' in message:
                 s3.s3_delete(message['image'])
             database.del_msg(mid, session['logged_in'])
-    flash ('delete messages successfully!')
+    flash (flash_config.get('home', 'delmsg_success'))
     return redirect(url_for('home.home'))
-
