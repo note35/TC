@@ -1,54 +1,34 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-
-from models.users import LoginForm
-
-from decorator import login_not_required
-
-from lib.database import db
-from lib import form
-
-from oauth2client.client import flow_from_clientsecrets
-from apiclient import discovery
-import httplib2
 import hashlib
 import time
 import ConfigParser
+
+from models.users import LoginForm
+from decorator import login_not_required
+from lib.database import db
+from lib import form
+from lib import google_openid
+
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
-common_config = ConfigParser.ConfigParser()
-common_config.read('config/common.cfg')
 
 database = db()
 database.init_db()
 
 login_blueprint = Blueprint('login', __name__, template_folder='templates', static_folder='static')
 
-def create_flow():
-    return flow_from_clientsecrets(common_config.get('login', 'google_client_secret'), scope='openid profile',
-                                   redirect_uri=url_for('login.oauth2cb', _external=True))
-
-def flow_step_1():
-    flow = create_flow()
-    return flow.step1_get_authorize_url()
-
-def flow_step_2(callback_code):
-    flow = create_flow()
-    if callback_code:
-        credentials = flow.step2_exchange(callback_code)
-        http_auth = credentials.authorize(httplib2.Http())
-        profile = discovery.build('oauth2', 'v2', http_auth)
-        user_info = profile.userinfo().get().execute()
-        return user_info['id'], user_info['given_name'], user_info['picture']
-
 @login_blueprint.route("/google_login")
 def google_login():
-    auth_uri = flow_step_1()
+    auth_uri = google_openid.flow_step_1()
     return redirect(auth_uri)
 
 @login_blueprint.route("/oauth2cb")
 def oauth2cb():
     if 'code' in request.args:
-        goog_user_id, user_given_name, goog_user_avatar = flow_step_2(request.args['code'])
+        goog_user_id, user_given_name, goog_user_avatar = google_openid.flow_step_2(request.args['code'])
+        if goog_user_id == user_given_name == goog_user_avatar == 'fail':
+            flash(flash_config.get('login', 'openid_error'))
+            return redirect(url_for('login.login'))
         # if you haven't login, add user
         if database.get_user_by_username('google:'+goog_user_id+':'+user_given_name) == None:
             ori_last_uid = database.get_latest_uid()
@@ -65,7 +45,7 @@ def oauth2cb():
         return redirect(url_for('home.home'))
     else:
         flash(flash_config.get('login', 'login_fail'))
-        return redirect(url_for('index.index'))
+        return redirect(url_for('login.login'))
 
 @login_blueprint.route("/login")
 @login_not_required

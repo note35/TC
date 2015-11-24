@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, session
 
 from decorator import login_required
-
 from lib.database import db
 
 database = db()

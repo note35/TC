@@ -1,15 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-
-from models.users import RegistrationForm
-
-from decorator import login_not_required
-
-from lib.database import db
-from lib import form
-
 import hashlib
 import time
 import ConfigParser
+
+from models.users import RegistrationForm
+from decorator import login_not_required
+from lib.database import db
+from lib import form
+
 key_config = ConfigParser.ConfigParser()
 key_config.read('config/key.cfg')
 flash_config = ConfigParser.ConfigParser()
@@ -56,8 +54,6 @@ def verify_register():
                 return redirect(url_for('register.register'))
         except Exception, e:
             print str(e.args)
-    elif request.method == 'POST' and not registform.validate():
+    else:
         form.flash_errors(registform)
         return redirect(url_for('register.register'))
-    return redirect(url_for('index.index'))
-

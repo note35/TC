@@ -1,6 +1,12 @@
+from lib import google_openid
 import web
 import unittest
 import ConfigParser 
+from mock import Mock, patch
+import random
+
+#TEST_NEW_GOOGLE_USER_RANDOM_NUMBER
+TURN = random.randint(10000,99999)
 
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
@@ -55,7 +61,41 @@ class LoginTestCase(unittest.TestCase):
         rv = self.login(key_config.get('test_only', 'tester_user'),
                         key_config.get('test_only', 'tester_pwd'))
         rv = self.app.get('/register', follow_redirects = True)
-        print rv.data
         assert flash_config.get('decorator', 'login_not_required')[1:-1] in rv.data
 
-       
+    def test021_google_login_redirect(self):
+        rv = self.app.get('/google_login')
+        assert 'You should be redirected automatically to target URL' in rv.data
+
+    def test022_google_login_failed(self):
+        rv = self.app.get('/oauth2cb', follow_redirects = True)        
+        assert flash_config.get('login', 'login_fail')[1:-1] in rv.data
+
+    def test023_oauth2callback_with_user(self):
+        #This code may not support Multithread
+        #google_openid.flow_step_2 = Mock(return_value=(
+        #    key_config.get('google_openid', 'id')[1:-1],
+        #    key_config.get('google_openid', 'name')[1:-1],
+        #    key_config.get('google_openid', 'pic')[1:-1])
+        #)
+        with patch('lib.google_openid.flow_step_2') as m:
+            m.return_value = (key_config.get('google_openid', 'id')[1:-1],
+                              key_config.get('google_openid', 'name')[1:-1],
+                              key_config.get('google_openid', 'pic')[1:-1]
+        )
+            rv = self.app.get('/oauth2cb?code=123456', follow_redirects=True)
+            assert flash_config.get('login', 'login_success')[1:-1] in rv.data
+
+    def test024_oauth2callback_with_newuser(self):
+        with patch('lib.google_openid.flow_step_2') as m:
+            m.return_value = (str(TURN), 
+                              key_config.get('google_openid', 'name')[1:-1],
+                              key_config.get('google_openid', 'pic')[1:-1]
+        )
+            rv = self.app.get('/oauth2cb?code=123456', follow_redirects=True)
+        assert flash_config.get('login', 'login_success')[1:-1] in rv.data
+
+    def test024_oauth2callback_without_mock(self):
+        rv = self.app.get('/oauth2cb?code=123456', follow_redirects=True)
+        assert flash_config.get('login', 'openid_error')[1:-1] in rv.data
+

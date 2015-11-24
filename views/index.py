@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, flash
+import json
+import ConfigParser
+
 from lib import s3
 from lib.database import db
 from lib import pagination
-import json
-import ConfigParser
+
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
 
@@ -30,8 +32,9 @@ def page(request_page):
     if message_list:
         for mid in message_list:
             message = database.get_msg_by_id(mid)
-            if message['user'].split(':')[0] == 'google':
-                message['user'] = message['user'].split(':')[2] 
+            if 'google' in message['user']:
+                if message['user'].split(':')[0] == 'google':
+                    message['user'] = message['user'].split(':')[2] 
             if 'image' in message:
                 message['image_data'] = s3.s3_get(message['image'])
             messages.append(message)

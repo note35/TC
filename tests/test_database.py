@@ -1,8 +1,3 @@
-import os
-import sys
-topdir = os.path.join(os.path.dirname(__file__), "..")
-sys.path.append(topdir)
-
 import unittest
 import random
 import hashlib
@@ -49,7 +44,7 @@ class DatabaseTestCase(unittest.TestCase):
         msg = { 'mid': mid,
                 'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                 'user': self.user_name,
-                'message': key_config.get('test_only', 'test_message')} 
+                'message': key_config.get('test_only', 'test_db_message')} 
         self.msg_mid = mid
         self.msg_message = msg
 
@@ -89,30 +84,23 @@ class DatabaseTestCase(unittest.TestCase):
         database.add_user(self.user_uid, self.user_name, self.user_info)
         assert self.is_user_in_hash(self.user_name)
         assert self.is_uid_in_list(self.user_uid)
-    '''
+
     def test002_add_msg(self):
-        #self.user_uid = database.get_latest_uid()
-        #need to get uid/username       
+        user = database.get_user_by_username(key_config.get('test_only', 'tester_user'))
+        self.user_uid = user['uid']
+        self.user_name = user['username']
         self.gen_msg()
-        print 'test002'
-        print self.user_uid
-        print self.user_name
-        print self.msg_mid 
         database.add_msg(self.msg_mid, self.user_name, self.msg_message)
         assert self.is_mid_in_list(self.msg_mid)
         assert self.is_msg_in_hash(self.msg_mid)
         assert self.is_mid_in_list(self.msg_mid, self.user_name)
 
     def test031_del_msg(self):
-        #need to get uid/mid
-        print 'test003'
-        print self.user_uid
-        print self.user_name 
-        print self.msg_mid
+        user = database.get_user_by_username(key_config.get('test_only', 'tester_user'))
+        self.user_uid = user['uid']
+        self.user_name = user['username']
+        self.gen_msg()
+        database.add_msg(self.msg_mid, self.user_name, self.msg_message) 
         database.del_msg(self.msg_mid, self.user_name) 
         assert not self.is_mid_in_list(self.msg_mid)
         assert not self.is_mid_in_list(self.msg_mid, self.user_name)
-    '''
-
-if __name__ == '__main__':
-    unittest.main()

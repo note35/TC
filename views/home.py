@@ -1,18 +1,16 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from werkzeug.utils import secure_filename
+import time
+import json
+import ConfigParser
 
 from models.messages import PostForm 
-
 from decorator import login_required
-
 from lib import s3
 from lib.database import db
 from lib import form
 from lib import pagination
 
-from werkzeug.utils import secure_filename
-import time
-import json
-import ConfigParser
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
 
