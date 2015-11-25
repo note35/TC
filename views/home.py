@@ -64,20 +64,21 @@ def pomsg():
                     'user': session['logged_in'], 
                     'message': postform.message.data }
         #for test, this is on solution of skipping upload
-        try:
-            image = request.files[postform.upload.name]
-            if image.content_type.startswith('image/'):
-                filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
-                s3.s3_put(filename, image)
-                message['image'] = filename
-                image.close()
-            else:
-                current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
-                flash(flash_config.get('home', 'upload_file_type_error'))
-                image.close()
-                return redirect(url_for('home.home'))
-        except:
-            current_app.logger.info(str(session['logged_in'])+' upload without image')
+        if request.files[postform.upload.name]:
+            try:
+                image = request.files[postform.upload.name]
+                if image.content_type.startswith('image/'):
+                    filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
+                    s3.s3_put(filename, image)
+                    message['image'] = filename
+                    image.close()
+                else:
+                    current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
+                    flash(flash_config.get('home', 'upload_file_type_error'))
+                    image.close()
+                    return redirect(url_for('home.home'))
+            except:
+                current_app.logger.info(str(session['logged_in'])+' upload without image')
         try:
             database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
         except:
