@@ -1,5 +1,39 @@
 {% extends "layout.html" %}
 {% block body %}
+<script src='https://www.google.com/recaptcha/api.js'></script>
+<script type="text/javascript">
+$(document).ready(function() { 
+	$('#password').keyup(function(e) {
+		var marvelRegex = new RegExp("^(?=.{16,})((?=.*[a-z])(?=.*[0-9)(?=.*[A-Z]))(?=.*[~!@#$%^&*()_+]).*$", "g");
+		var strongRegex = new RegExp("^(?=.{10,})((?=.*[a-z])(?=.*[0-9)(?=.*[A-Z]))(?=.*[~!@#$%^&*()_+]).*$", "g");
+		var mediumRegex = new RegExp("^(?=.{8,})((?=.*[a-z])(?=.*[0-9)(?=.*[A-Z])).*$", "g");
+		var okokokRegex = new RegExp("^(?=.{6,})((?=.*[a-z])((?=.*[0-9])|(?=.*[A-Z]))).*$", "g");
+		var enoughRegex = new RegExp("(?=.{1,}).*", "g");
+		if (false == enoughRegex.test($(this).val())) {
+			 $('#passstrength').html('');
+		} else if (marvelRegex.test($(this).val())) {
+			 $('#passstrength').html('Oh my god, this password is so amazing!');
+		} else if (strongRegex.test($(this).val())) {
+			 $('#passstrength').html('Very strong!');
+		} else if (mediumRegex.test($(this).val())) {
+			 $('#passstrength').html('Seems ok!');
+		} else if (okokokRegex.test($(this).val())) {
+			 $('#passstrength').html('Well, not bad!');
+		} else {
+			 $('#passstrength').html('So bad!');
+		}
+		return true;
+	})
+})
+</script>
+<style type="text/css">
+#passstrength {
+	color:green;
+	font-family:verdana;
+	font-size:10px;
+	font-weight:bold;
+}
+</style>
 <h2>Register</h2>
 {% if not session.logged_in %}
 <form role="form" action="{{ url_for('register.verify_register') }}" method=post>
@@ -10,6 +44,7 @@
             {{ form.username(class="form-control", id="username") }}
         {% endif %}
         <label for="password">{{ form.password.label }}</label>
+		<span id="passstrength"></span>
         {{ form.password(class="form-control", id="password") }}
         <label for="confirm_password">{{ form.confirm_password.label }}</label>
         {{ form.confirm_password(class="form-control", id="confirm_password") }}
