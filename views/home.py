@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, Request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 import time
 import json
 import ConfigParser
+from StringIO import StringIO
 
 from models.messages import PostForm 
 from decorator import login_required
@@ -19,6 +20,20 @@ database.init_db()
 
 home_blueprint = Blueprint('home', __name__, template_folder='templates', static_folder='static')
 msgs_in_each_page = pagination.msgs_in_each_page
+
+RESULT = False
+
+class FileObj(StringIO):
+    
+    def close(self):
+        print 'in file close'
+        global RESULT
+        RESULT = True
+
+class MyRequest(Request):
+
+    def _get_file_stream(*args, **kwargs):
+        return FileObj()
  
 @home_blueprint.route("/home/")
 @home_blueprint.route("/home")
@@ -67,8 +82,10 @@ def pomsg():
                 filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
                 s3.s3_put(filename, image)
                 message['image'] = filename
+                image.close()
             else:
                 flash(flash_config.get('home', 'upload_file_type_error'))
+                image.close()
                 return redirect(url_for('home.home'))
         database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
     elif request.method == 'POST' and not postform.validate():

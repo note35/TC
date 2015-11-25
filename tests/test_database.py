@@ -12,7 +12,6 @@ from lib.database import db
 database = db()
 database.init_db()
 
-
 #TEST_USER_RANDOM_NUMBER
 TURN = random.randint(10000,99999)
 

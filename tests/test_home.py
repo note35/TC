@@ -2,6 +2,7 @@ import web
 import unittest
 import ConfigParser 
 import json
+from StringIO import StringIO
 
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
@@ -28,34 +29,43 @@ class HomeTestCase(unittest.TestCase):
             password = password
         ), follow_redirects = True)
 
-    def pomsg(self, msg):
+    def pomsg(self, msg, upload):
         rv = self.app.post('/pomsg', data=dict(
             message = msg,
-            upload = None
+            upload = upload
         ), follow_redirects = True)
         return rv
 
-    def delmsg(self, msg):
-        '''
-        Warning: it only test delete the latest message, it can be improved
-        Now:    1) user kira login
-                2) post a new message
-                3) delete that message 
-        '''
-        self.pomsg(msg)
+    def delmsg(self):
         page = self.app.get('/home/1', follow_redirects=True)
         msgs = []
         all_id = json.loads(page.data)
         for item in all_id:
             msgs.append(item['mid'])
-        target_id = msgs[-1]
+        target_id = msgs[0]
         return self.app.get('/delmsg/'+target_id, follow_redirects = True)
+
+    def check_upload(self, filename):
+        page = self.app.get('/home/1', follow_redirects=True) 
+        msgs = []
+        if flash_config.get('home', 'page_not_exist')[1:-1] in page.data:
+            return False
+        else:
+            all_image = json.loads(page.data)
+            for item in all_image:
+                if 'image' in item:
+                    if key_config.get('test_only', 'tester_user') in item['image']:
+                        if filename in item['image']:
+                            self.delmsg()
+                            return True
+        return False
 
     def test001_exist_page(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        self.pomsg(key_config.get('test_only', 'test_message'))
+        self.pomsg(key_config.get('test_only', 'test_message'), None)
         rv = self.app.get('/home/1', follow_redirects=True)
+        self.delmsg()
         assert flash_config.get('home', 'page_not_exist')[1:-1] not in rv.data   
 
     def test002_not_exist_page(self):
@@ -67,18 +77,37 @@ class HomeTestCase(unittest.TestCase):
     def test011_post_message(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        self.pomsg(key_config.get('test_only', 'test_message'))
+        self.pomsg(key_config.get('test_only', 'test_message'), None)
         rv = self.app.get('/home/1', follow_redirects=True)
+        self.delmsg()
         assert key_config.get('test_only', 'test_message')[1:-1] in rv.data
 
     def test012_post_message_fail(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        rv = self.pomsg('')
+        rv = self.pomsg('', None)
         assert 'Error in the ' in rv.data
 
     def test021_delete_message_success(self):
+        #Warning: it only test delete the latest message, it can be improved
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        rv = self.delmsg('test delete message :(')
+        self.pomsg(key_config.get('test_only', 'test_delete_message'), None)
+        rv = self.delmsg()
         assert flash_config.get('home', 'delmsg_success')[1:-1] in rv.data
+
+    def test013_post_message_with_pic(self):
+        self.login(key_config.get('test_only', 'tester_user'),
+                   key_config.get('test_only', 'tester_pwd'))
+        with open('test_upload/test_upload.jpg', 'r') as upload_file:
+            self.pomsg(key_config.get('test_only', 'test_message'),
+                       (StringIO(upload_file.read()), 'test_upload.jpg'))
+        assert self.check_upload('test_upload.jpg')
+
+    def test014_post_message_with_wrong_pic(self):
+        self.login(key_config.get('test_only', 'tester_user'),
+                   key_config.get('test_only', 'tester_pwd'))
+        with open('test_upload/test_upload.txt', 'r') as upload_file:
+            self.pomsg(key_config.get('test_only', 'test_message'),
+                       (StringIO(upload_file.read()), 'test_upload.txt'))
+        assert not self.check_upload('test_upload.txt')
