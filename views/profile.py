@@ -14,7 +14,7 @@ def profile():
     try:
         profile_info = database.get_user_by_username(session['logged_in'])
         profile_info.pop('password', None)
-    except:
+    except AttributeError as ex:
         current_app.logger.error('Something wrong while getting user from database') 
         abort(500)
     return render_template('profile.html', profile_info=profile_info)

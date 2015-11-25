@@ -24,7 +24,7 @@ def index():
 def page(request_page):
     try:
         message_list = pagination.get_page(request_page)
-    except:
+    except ValueError as ex:
         current_app.logger.error('request_page is not number')
         abort(404)
 

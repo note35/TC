@@ -63,7 +63,7 @@ class HomeTestCase(unittest.TestCase):
     def test001_exist_page(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        self.pomsg(key_config.get('test_only', 'test_message'), None)
+        self.pomsg(key_config.get('test_only', 'test_message'), (StringIO(''),''))
         rv = self.app.get('/home/1', follow_redirects=True)
         self.delmsg()
         assert flash_config.get('home', 'page_not_exist')[1:-1] not in rv.data   
@@ -77,7 +77,7 @@ class HomeTestCase(unittest.TestCase):
     def test011_post_message(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        self.pomsg(key_config.get('test_only', 'test_message'), None)
+        self.pomsg(key_config.get('test_only', 'test_message'), (StringIO(''),''))
         rv = self.app.get('/home/1', follow_redirects=True)
         self.delmsg()
         assert key_config.get('test_only', 'test_message')[1:-1] in rv.data
@@ -92,7 +92,7 @@ class HomeTestCase(unittest.TestCase):
         #Warning: it only test delete the latest message, it can be improved
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
-        self.pomsg(key_config.get('test_only', 'test_delete_message'), None)
+        self.pomsg(key_config.get('test_only', 'test_delete_message'), (StringIO(''),''))
         rv = self.delmsg()
         assert flash_config.get('home', 'delmsg_success')[1:-1] in rv.data
 

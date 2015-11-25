@@ -34,7 +34,7 @@ def home():
 def page(request_page):
     try:
         message_list_by_id = pagination.get_page(request_page, session['logged_in'])
-    except:
+    except ValueError as ex:
         current_app.logger.error('request_page is not number')
         abort(404)
 
@@ -65,20 +65,17 @@ def pomsg():
                     'message': postform.message.data }
         #for test, this is on solution of skipping upload
         if request.files[postform.upload.name]:
-            try:
-                image = request.files[postform.upload.name]
-                if image.content_type.startswith('image/'):
-                    filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
-                    s3.s3_put(filename, image)
-                    message['image'] = filename
-                    image.close()
-                else:
-                    current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
-                    flash(flash_config.get('home', 'upload_file_type_error'))
-                    image.close()
-                    return redirect(url_for('home.home'))
-            except:
-                current_app.logger.info(str(session['logged_in'])+' upload without image')
+            image = request.files[postform.upload.name]
+            if image.content_type.startswith('image/'):
+                filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
+                s3.s3_put(filename, image)
+                message['image'] = filename
+                image.close()
+            else:
+                current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
+                flash(flash_config.get('home', 'upload_file_type_error'))
+                image.close()
+                return redirect(url_for('home.home'))
         try:
             database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
         except:
@@ -101,5 +98,5 @@ def delmsg(mid):
                 current_app.logger.warn(str(session['logged_in'])+' try to delete illegal message')
             flash (flash_config.get('home', 'delmsg_success'))
             return redirect(url_for('home.home'))
-        except:
+        except TypeError as ex:
             abort(403)
