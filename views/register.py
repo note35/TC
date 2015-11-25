@@ -57,4 +57,4 @@ def verify_register():
             abort(500)
     else:
         form.flash_errors(registform)
-        return redirect(url_for('register.register'))
+        return render_template('register.html', form=registform)

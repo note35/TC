@@ -70,7 +70,7 @@ def verify_login():
             flash(flash_config.get('login', 'no_such_user'))
     elif request.method == 'POST' and not loginform.validate():
         form.flash_errors(loginform) 
-    return redirect(url_for('login.login')) 
+    return render_template('login.html', form = loginform) 
 
 @login_blueprint.route("/logout")
 def logout():

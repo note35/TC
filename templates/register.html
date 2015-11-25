@@ -4,7 +4,11 @@
 {% if not session.logged_in %}
 <form role="form" action="{{ url_for('register.verify_register') }}" method=post>
         <label for="username">{{ form.username.label }}</label>
-        {{ form.username(class="form-control", id="username") }}
+        {% if form.username.data %}
+            {{ form.username(class="form-control", id="username", value=form.username.data) }}
+        {% else %}
+            {{ form.username(class="form-control", id="username") }}
+        {% endif %}
         <label for="password">{{ form.password.label }}</label>
         {{ form.password(class="form-control", id="password") }}
         <label for="confirm_password">{{ form.confirm_password.label }}</label>
