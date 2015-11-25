@@ -1,5 +1,6 @@
 from redis import Redis
 import ast
+from flask import current_app
 
 class db(object):
 
@@ -13,13 +14,13 @@ class db(object):
         try:
             return self.redis.lrange('messages', 0, self.redis.llen('messages'))
         except:
-            print("Messages list is not accessible!")
+            current_app.logger.error("Messages list is not accessible!")
 
     def get_user_list(self):
         try:
             return self.redis.lrange('users', 0, self.redis.llen('users'))
         except:
-            print("Users list is not accessible!")
+            current_app.logger.error("Users list is not accessible!")
 
     def get_latest_mid(self):
         try:
@@ -28,7 +29,7 @@ class db(object):
             else:
                 return int(0)
         except:
-            print("Messages list is not accessible!")
+            current_app.logger.error("Messages list is not accessible!")
 
     def get_latest_uid(self):
         try:
@@ -37,25 +38,25 @@ class db(object):
             else:
                 return int(0)
         except:
-            print("Messages list is not accessible!")
+            current_app.logger.error("Messages list is not accessible!")
 
     def get_user_msg_list(self, username):
         try:
             return self.redis.lrange('messages:'+username, 0, self.redis.llen('messages:'+username))
         except:
-            print(username + "'s message list is not accessible!")
+            current_app.logger.error(username + "'s message list is not accessible!")
 
     def get_msg_by_id(self, mid):
         try:
             return ast.literal_eval(self.redis.hget('message', mid))
         except:
-            print('This message is not exist!')
+            current_app.logger.error('This message is not exist!')
 
     def get_user_by_username(self, username):
         try:
             return ast.literal_eval(self.redis.hget('user', username))
         except:
-            print('This user is not exist!')
+            current_app.logger.error('This user is not exist!')
 
     def get_username_by_uid(self, uid):
         pass
@@ -66,7 +67,7 @@ class db(object):
             self.redis.lrem('messages', mid)
             self.redis.lrem('messages:'+username, mid)
         except:
-            print('remove message fails')
+            current_app.logger.error('remove message fails')
 
     def add_msg(self, mid, username, message):
         try:
@@ -74,11 +75,11 @@ class db(object):
             self.redis.lpush('messages:'+username, mid)
             self.redis.hset('message', mid, message) 
         except:
-            print('add message fails')
+            current_app.logger.error('add message fails')
 
     def add_user(self, uid, username, user_info):
         try:
             self.redis.lpush('users', uid)
             self.redis.hset('user', username, user_info)
         except:
-            print('add user fails') 
+            current_app.logger.error('add user fails') 

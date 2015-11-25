@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash
+from flask import Blueprint, render_template, flash, current_app, abort
 import json
 import ConfigParser
 
@@ -22,7 +22,11 @@ def index():
 
 @index_blueprint.route("/<request_page>")
 def page(request_page):
-    message_list = pagination.get_page(request_page)
+    try:
+        message_list = pagination.get_page(request_page)
+    except:
+        current_app.logger.error('request_page is not number')
+        abort(404)
 
     if 'error' in message_list:
         flash(flash_config.get('index', 'page_not_exist'))

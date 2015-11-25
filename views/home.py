@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, Request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, abort
 from werkzeug.utils import secure_filename
 import time
 import json
@@ -21,20 +21,6 @@ database.init_db()
 home_blueprint = Blueprint('home', __name__, template_folder='templates', static_folder='static')
 msgs_in_each_page = pagination.msgs_in_each_page
 
-RESULT = False
-
-class FileObj(StringIO):
-    
-    def close(self):
-        print 'in file close'
-        global RESULT
-        RESULT = True
-
-class MyRequest(Request):
-
-    def _get_file_stream(*args, **kwargs):
-        return FileObj()
- 
 @home_blueprint.route("/home/")
 @home_blueprint.route("/home")
 @login_required
@@ -46,7 +32,11 @@ def home():
 @home_blueprint.route("/home/<request_page>")
 @login_required
 def page(request_page):
-    message_list_by_id = pagination.get_page(request_page, session['logged_in'])
+    try:
+        message_list_by_id = pagination.get_page(request_page, session['logged_in'])
+    except:
+        current_app.logger.error('request_page is not number')
+        abort(404)
 
     if 'error' in message_list_by_id:
         flash(flash_config.get('home', 'page_not_exist'))
@@ -73,21 +63,25 @@ def pomsg():
                     'time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                     'user': session['logged_in'], 
                     'message': postform.message.data }
+        #for test, this is on solution of skipping upload
         try:
             image = request.files[postform.upload.name]
-        except:
-            image = None
-        if image:
             if image.content_type.startswith('image/'):
                 filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
                 s3.s3_put(filename, image)
                 message['image'] = filename
                 image.close()
             else:
+                current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
                 flash(flash_config.get('home', 'upload_file_type_error'))
                 image.close()
                 return redirect(url_for('home.home'))
-        database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
+        except:
+            current_app.logger.info(str(session['logged_in'])+' upload without image')
+        try:
+            database.add_msg(str(ori_last_mid+1), session['logged_in'], message)
+        except:
+            current_app.logger.error('add message fail')
     elif request.method == 'POST' and not postform.validate():
         form.flash_errors(postform)
     return redirect(url_for('home.home'))
@@ -96,10 +90,15 @@ def pomsg():
 @login_required
 def delmsg(mid):
     if request.method == 'GET':
-        message = database.get_msg_by_id(mid)
-        if message['user'] == session['logged_in']:
-            if 'image' in message:
-                s3.s3_delete(message['image'])
-            database.del_msg(mid, session['logged_in'])
-    flash (flash_config.get('home', 'delmsg_success'))
-    return redirect(url_for('home.home'))
+        try:
+            message = database.get_msg_by_id(mid)
+            if message['user'] == session['logged_in']:
+                if 'image' in message:
+                    s3.s3_delete(message['image'])
+                database.del_msg(mid, session['logged_in'])
+            else:
+                current_app.logger.warn(str(session['logged_in'])+' try to delete illegal message')
+            flash (flash_config.get('home', 'delmsg_success'))
+            return redirect(url_for('home.home'))
+        except:
+            abort(403)

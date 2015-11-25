@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, abort
 import hashlib
 import time
 import ConfigParser
@@ -52,8 +52,9 @@ def verify_register():
             else:
                 flash(flash_config.get('register', 'user_exist'))
                 return redirect(url_for('register.register'))
-        except Exception, e:
-            print str(e.args)
+        except:
+            current_app.logger.error('Something wrong in user database')
+            abort(500)
     else:
         form.flash_errors(registform)
         return redirect(url_for('register.register'))
