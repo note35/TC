@@ -2,6 +2,7 @@ import web
 import unittest
 import ConfigParser 
 import json
+import pytest
 from StringIO import StringIO
 
 flash_config = ConfigParser.ConfigParser()
