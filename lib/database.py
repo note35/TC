@@ -1,6 +1,7 @@
 from redis import Redis
 import ast
 from flask import current_app
+from cgi import escape
 
 class db(object):
 
@@ -48,7 +49,10 @@ class db(object):
 
     def get_msg_by_id(self, mid):
         try:
-            return ast.literal_eval(self.redis.hget('message', mid))
+            tmp = ast.literal_eval(self.redis.hget('message', mid))
+            for key in tmp:
+                tmp[key] = escape(tmp[key])
+            return tmp
         except:
             current_app.logger.error('This message is not exist!')
 

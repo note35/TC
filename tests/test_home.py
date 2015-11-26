@@ -4,6 +4,7 @@ import ConfigParser
 import json
 import pytest
 from StringIO import StringIO
+from cgi import escape
 
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
@@ -81,13 +82,21 @@ class HomeTestCase(unittest.TestCase):
         self.pomsg(key_config.get('test_only', 'test_message'), (StringIO(''),''))
         rv = self.app.get('/home/1', follow_redirects=True)
         self.delmsg()
-        assert key_config.get('test_only', 'test_message')[1:-1] in rv.data
+        assert escape(key_config.get('test_only', 'test_message')) in rv.data
 
     def test012_post_message_fail(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
         rv = self.pomsg('', None)
         assert 'Error in the ' in rv.data
+
+    def test013_XSS_message(self):
+        self.login(key_config.get('test_only', 'tester_user'),
+                   key_config.get('test_only', 'tester_pwd'))
+        self.pomsg(key_config.get('test_only', 'xss_message'), (StringIO(''),''))
+        rv = self.app.get('/home/1', follow_redirects=True)
+        self.delmsg()
+        assert escape(key_config.get('test_only', 'xss_message')) in rv.data
 
     def test021_delete_message_success(self):
         #Warning: it only test delete the latest message, it can be improved
