@@ -29,12 +29,6 @@ In this project, we use three import module 'flask', 'wtform', 'blueprint'
 
 ##Run TC as a formal product
 
-                         redis 
-       443                ||
-user <====> nginx <====> uwsgi <====> flask
-        8080 ||    9000 
-inside <=====//
-
 0. start the redis server
 
     ```
