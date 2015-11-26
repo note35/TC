@@ -12,7 +12,7 @@ from lib import error_handler
 import ConfigParser
 import logging.config
 
-logging.config.fileConfig('config/logging.ini')
+#logging.config.fileConfig('config/logging.ini')
 
 key_config = ConfigParser.ConfigParser()
 common_config = ConfigParser.ConfigParser()
@@ -20,6 +20,8 @@ key_config.read('config/key.cfg')
 common_config.read('config/common.cfg')
 
 application = Flask(__name__)
+application.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 application.register_blueprint(index_blueprint)
 application.register_blueprint(register_blueprint)
 application.register_blueprint(login_blueprint)

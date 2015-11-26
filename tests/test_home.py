@@ -4,12 +4,24 @@ import ConfigParser
 import json
 import pytest
 from StringIO import StringIO
-from cgi import escape
 
 flash_config = ConfigParser.ConfigParser()
 flash_config.read('config/flash.cfg')
 key_config = ConfigParser.ConfigParser()
 key_config.read('config/key.cfg')
+
+html_escape_table = {
+     "&": "&amp;",
+     '"': "&quot;",
+     "'": "&apos;",
+     ">": "&gt;",
+     "<": "&lt;",
+     }
+
+def html_escape(text):
+     return "".join(html_escape_table.get(c,c) for c in text)
+
+
 
 class HomeTestCase(unittest.TestCase):
 
@@ -82,7 +94,7 @@ class HomeTestCase(unittest.TestCase):
         self.pomsg(key_config.get('test_only', 'test_message'), (StringIO(''),''))
         rv = self.app.get('/home/1', follow_redirects=True)
         self.delmsg()
-        assert escape(key_config.get('test_only', 'test_message')) in rv.data
+        assert html_escape(key_config.get('test_only', 'test_message')) in rv.data
 
     def test012_post_message_fail(self):
         self.login(key_config.get('test_only', 'tester_user'),
@@ -96,7 +108,7 @@ class HomeTestCase(unittest.TestCase):
         self.pomsg(key_config.get('test_only', 'xss_message'), (StringIO(''),''))
         rv = self.app.get('/home/1', follow_redirects=True)
         self.delmsg()
-        assert escape(key_config.get('test_only', 'xss_message')) in rv.data
+        assert html_escape(key_config.get('test_only', 'xss_message')) in rv.data
 
     def test021_delete_message_success(self):
         #Warning: it only test delete the latest message, it can be improved
@@ -113,7 +125,7 @@ class HomeTestCase(unittest.TestCase):
             self.pomsg(key_config.get('test_only', 'test_message'),
                        (StringIO(upload_file.read()), 'test_upload.jpg'))
         assert self.check_upload('test_upload.jpg')
-
+    
     def test014_post_message_with_wrong_pic(self):
         self.login(key_config.get('test_only', 'tester_user'),
                    key_config.get('test_only', 'tester_pwd'))
