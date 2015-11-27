@@ -80,22 +80,23 @@ def pomsg():
                     'message': html_escape(postform.message.data) }
         if request.files[postform.upload.name]:
             image = request.files[postform.upload.name]
-            tmpfile_name = str(random.randint(1000,9999))+(str(time.strftime('_%H_%M_%S', time.localtime(time.time()))))
-            image.save('/tmp/'+tmpfile_name)
-            file_length = os.stat('/tmp/'+tmpfile_name).st_size
-            if file_length > 4 * 1024 * 1024:
+            pos = image.tell()
+            file_length = len(image.read())
+            image.seek(pos)
+            if file_length < (2 * 1024 * 1024):
+                if image.content_type.startswith('image/'):
+                    filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
+                    s3.s3_put(filename, image)
+                    message['image'] = filename
+                    image.close()
+                else:
+                    current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
+                    flash(flash_config.get('home', 'upload_file_type_error'))
+                    image.close()
+                    return redirect(url_for('home.home'))
+            else:
                 current_app.logger.warn(str(session['logged_in'])+' upload file too big')
                 flash(flash_config.get('home', 'upload_file_too_big'))
-                image.close()
-                return redirect(url_for('home.home'))
-            elif image.content_type.startswith('image/'):
-                filename = session['logged_in'] + ':' + str(ori_last_mid+1) + ':' + secure_filename(image.filename)
-                s3.s3_put(filename, image)
-                message['image'] = filename
-                image.close()
-            else:
-                current_app.logger.warn(str(session['logged_in'])+' upload file-content error')
-                flash(flash_config.get('home', 'upload_file_type_error'))
                 image.close()
                 return redirect(url_for('home.home'))
         try:

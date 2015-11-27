@@ -23,6 +23,12 @@ function get_code(msg)
     return code;
 }
 $(document).ready(function() {
+	$('#upload').bind('change', function() {
+		if (this.files[0].size > 2*1024*1024){
+			alert('upload file size should not greater than 2MB');
+			$('#upload').val('');
+		}	
+	});
     var current_page = 1;
     var loading = false;
     var total_pages = {{total_pages}};
