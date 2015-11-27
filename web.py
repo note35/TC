@@ -12,7 +12,7 @@ from lib import error_handler
 import ConfigParser
 import logging.config
 
-#logging.config.fileConfig('config/logging.ini')
+logging.config.fileConfig('config/logging.ini')
 
 key_config = ConfigParser.ConfigParser()
 common_config = ConfigParser.ConfigParser()
